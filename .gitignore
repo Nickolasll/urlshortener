@@ -12,6 +12,7 @@
 *.out
 
 # Binaries
+cmd/shortener
 cmd/shortener/main
 cmd/shortener/shortener
 

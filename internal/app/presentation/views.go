@@ -23,9 +23,9 @@ func mainPage(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodPost {
 		res.WriteHeader(http.StatusCreated)
 		body, _ := io.ReadAll(req.Body)
-		shortedUrl := "/" + randStringBytes(8)
-		urlShortenerMap[shortedUrl] = body
-		res.Write([]byte("http://" + req.Host + shortedUrl))
+		slug := "/" + randStringBytes(8)
+		urlShortenerMap[slug] = body
+		res.Write([]byte("http://" + req.Host + slug))
 		return
 	} else if req.Method == http.MethodGet {
 		value, ok := urlShortenerMap[req.URL.Path]

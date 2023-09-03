@@ -2,33 +2,24 @@ package presentation
 
 import (
 	"io"
-	"math/rand"
 	"net/http"
+
+	"github.com/Nickolasll/urlshortener/internal/app/domain"
+	"github.com/Nickolasll/urlshortener/internal/app/infrastructure"
 )
-
-var urlShortenerMap map[string]string = map[string]string{}
-
-const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
-func randStringBytes(size int) string {
-	result := make([]byte, size)
-	for i := range result {
-		result[i] = letterBytes[rand.Intn(len(letterBytes))]
-	}
-	return string(result)
-}
 
 func mainPage(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodPost {
 		body, _ := io.ReadAll(req.Body)
-		slug := "/" + randStringBytes(8)
-		urlShortenerMap[slug] = string(body)
+		slug := domain.GenerateSlug(8)
+		infrastructure.RamRepository.Save(string(body), slug)
 		res.Header().Set("content-type", "text/plain")
 		res.WriteHeader(http.StatusCreated)
 		res.Write([]byte("http://" + req.Host + slug))
 		return
 	} else if req.Method == http.MethodGet {
-		value, ok := urlShortenerMap[req.URL.Path]
+		slug := req.URL.Path
+		value, ok := infrastructure.RamRepository.Get(slug)
 		if ok {
 			res.Header().Add("Location", value)
 			res.WriteHeader(http.StatusTemporaryRedirect)

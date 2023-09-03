@@ -60,6 +60,8 @@ func Test_mainPage(t *testing.T) {
 			resBody, err := io.ReadAll(result.Body)
 			require.NoError(t, err)
 			assert.Equal(t, len(tt.want.body), len(resBody))
+			err = result.Body.Close()
+			require.NoError(t, err)
 			if tt.want.statusCode == 201 {
 				bodyReader := strings.NewReader(tt.body)
 				request := httptest.NewRequest(http.MethodGet, string(resBody), bodyReader)

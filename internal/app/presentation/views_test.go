@@ -72,6 +72,8 @@ func Test_mainPage(t *testing.T) {
 				result := recorder.Result()
 				assert.Equal(t, http.StatusTemporaryRedirect, result.StatusCode)
 				assert.Equal(t, tt.body, result.Header.Get("Location"))
+				err = result.Body.Close()
+				require.NoError(t, err)
 			}
 		})
 	}

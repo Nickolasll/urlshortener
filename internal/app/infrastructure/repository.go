@@ -13,6 +13,6 @@ func (r Repository) Get(slug string) (string, bool) {
 	return value, ok
 }
 
-var RamRepository = Repository{
+var RAMRepository = Repository{
 	urlShortenerMap: map[string]string{},
 }

@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	mux := presentation.MuxFactory()
+	mux := presentation.ChiFactory()
 	err := http.ListenAndServe(`:8080`, mux)
 	if err != nil {
 		panic(err)

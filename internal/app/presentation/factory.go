@@ -14,7 +14,7 @@ func MuxFactory() *http.ServeMux {
 
 func ChiFactory() *chi.Mux {
 	router := chi.NewRouter()
-	router.Get("/", GetHandler)
+	router.Get("/{slug}", GetHandler)
 	router.Post("/", PostHandler)
 	return router
 }

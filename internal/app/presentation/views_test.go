@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Nickolasll/urlshortener/internal/app/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -30,7 +31,7 @@ func Test_mainPage(t *testing.T) {
 			want: want{
 				statusCode:  201,
 				contentType: "text/plain",
-				body:        "http://localhost:8080/ImePAqgP",
+				body:        "http://" + *config.ServerEndpoint + "/ImePAqgP",
 			},
 		},
 		{

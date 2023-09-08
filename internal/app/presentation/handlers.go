@@ -28,7 +28,7 @@ func PostHandler(res http.ResponseWriter, req *http.Request) {
 		infrastructure.RAMRepository.Save(string(body), slug)
 		res.Header().Set("content-type", "text/plain")
 		res.WriteHeader(http.StatusCreated)
-		res.Write([]byte("http://" + *config.SlugEndpoint + slug))
+		res.Write([]byte(*config.SlugEndpoint + slug))
 		return
 	}
 }

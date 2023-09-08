@@ -16,7 +16,7 @@ func Test_mainPage(t *testing.T) {
 	type want struct {
 		contentType string
 		statusCode  int
-		body        string
+		bodyLen     int
 	}
 	tests := []struct {
 		name   string
@@ -31,7 +31,7 @@ func Test_mainPage(t *testing.T) {
 			want: want{
 				statusCode:  201,
 				contentType: "text/plain",
-				body:        "http://" + *config.ServerEndpoint + "/ImePAqgP",
+				bodyLen:     len("http://"+*config.ServerEndpoint+"/") + config.SlugSize,
 			},
 		},
 		{
@@ -41,7 +41,7 @@ func Test_mainPage(t *testing.T) {
 			want: want{
 				statusCode:  400,
 				contentType: "",
-				body:        "",
+				bodyLen:     0,
 			},
 		},
 	}
@@ -60,7 +60,7 @@ func Test_mainPage(t *testing.T) {
 			defer result.Body.Close()
 			resBody, err := io.ReadAll(result.Body)
 			require.NoError(t, err)
-			assert.Equal(t, len(tt.want.body), len(resBody))
+			assert.Equal(t, tt.want.bodyLen, len(resBody))
 			err = result.Body.Close()
 			require.NoError(t, err)
 			if tt.want.statusCode == 201 {

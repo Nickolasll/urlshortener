@@ -4,6 +4,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/Nickolasll/urlshortener/internal/app/config"
 	"github.com/Nickolasll/urlshortener/internal/app/domain"
 	"github.com/Nickolasll/urlshortener/internal/app/infrastructure"
 )
@@ -27,7 +28,7 @@ func PostHandler(res http.ResponseWriter, req *http.Request) {
 		infrastructure.RAMRepository.Save(string(body), slug)
 		res.Header().Set("content-type", "text/plain")
 		res.WriteHeader(http.StatusCreated)
-		res.Write([]byte("http://" + req.Host + slug))
+		res.Write([]byte("http://" + *config.SlugEndpoint + slug))
 		return
 	}
 }

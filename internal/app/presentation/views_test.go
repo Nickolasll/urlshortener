@@ -30,7 +30,7 @@ func Test_mainPage(t *testing.T) {
 			want: want{
 				statusCode:  201,
 				contentType: "text/plain",
-				body:        "http://example.com/ImePAqgP",
+				body:        "http://localhost:8080/ImePAqgP",
 			},
 		},
 		{

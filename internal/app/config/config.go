@@ -18,7 +18,7 @@ func ParseFlags() {
 		*ServerEndpoint = envServerAddr
 	}
 
-	if envBaseUrl := os.Getenv("BASE_URL"); envBaseUrl != "" {
-		*SlugEndpoint = envBaseUrl
+	if envBaseURL := os.Getenv("BASE_URL"); envBaseURL != "" {
+		*SlugEndpoint = envBaseURL
 	}
 }

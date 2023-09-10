@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"net/http"
 
 	"github.com/Nickolasll/urlshortener/internal/app/config"
@@ -9,7 +8,7 @@ import (
 )
 
 func main() {
-	flag.Parse()
+	config.ParseFlags()
 	mux := presentation.ChiFactory()
 	err := http.ListenAndServe(*config.ServerEndpoint, mux)
 	if err != nil {

@@ -23,8 +23,6 @@ func (r *ResponseRecorder) WriteHeader(status int) {
 	r.ResponseWriter.WriteHeader(status)
 }
 
-// WithLogging добавляет дополнительный код для регистрации сведений о запросе
-// и возвращает новый http.Handler.
 func WithLogging(handlerFn http.HandlerFunc) http.HandlerFunc {
 	logFn := func(res http.ResponseWriter, req *http.Request) {
 
@@ -33,20 +31,12 @@ func WithLogging(handlerFn http.HandlerFunc) http.HandlerFunc {
 			Status:         200,
 			ContentLength:  0,
 		}
-		// функция Now() возвращает текущее время
 		start := time.Now()
-
-		// эндпоинт /ping
 		uri := req.RequestURI
-		// метод запроса
 		method := req.Method
 
-		// точка, где выполняется хендлер pingHandler
-		handlerFn.ServeHTTP(recorder, req) // обслуживание оригинального запроса
+		handlerFn.ServeHTTP(recorder, req)
 
-		// Since возвращает разницу во времени между start
-		// и моментом вызова Since. Таким образом можно посчитать
-		// время выполнения запроса.
 		duration := time.Since(start)
 
 		log.WithFields(log.Fields{
@@ -61,6 +51,5 @@ func WithLogging(handlerFn http.HandlerFunc) http.HandlerFunc {
 		}).Info("Response info")
 
 	}
-	// возвращаем функционально расширенный хендлер
 	return http.HandlerFunc(logFn)
 }

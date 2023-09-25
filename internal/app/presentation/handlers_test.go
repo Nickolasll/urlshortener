@@ -26,7 +26,7 @@ func Test_ShortenHandler(t *testing.T) {
 			name: "success short",
 			body: []byte(`{"url": "https://practicum.yandex.ru"}`),
 			want: want{
-				statusCode:  http.StatusOK,
+				statusCode:  http.StatusCreated,
 				contentType: "application/json",
 			},
 		},

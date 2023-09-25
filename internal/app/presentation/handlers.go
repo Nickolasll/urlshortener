@@ -55,7 +55,7 @@ func ShortenHandler(res http.ResponseWriter, req *http.Request) {
 		slug := domain.GenerateSlug(config.SlugSize)
 		infrastructure.RAMRepository.Save(input.URL, slug)
 		resp, _ := json.Marshal(Output{Result: *config.SlugEndpoint + slug})
-		res.WriteHeader(http.StatusOK)
+		res.WriteHeader(http.StatusCreated)
 		res.Write(resp)
 		return
 	}

@@ -16,5 +16,6 @@ func ChiFactory() *chi.Mux {
 	router := chi.NewRouter()
 	router.Get("/{slug}", WithLogging(GetHandler))
 	router.Post("/", WithLogging(PostHandler))
+	router.Post("/api/shorten", WithLogging(ShortenHandler))
 	return router
 }

@@ -1,6 +1,7 @@
 package presentation
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
 
@@ -29,6 +30,33 @@ func PostHandler(res http.ResponseWriter, req *http.Request) {
 		res.Header().Set("content-type", "text/plain")
 		res.WriteHeader(http.StatusCreated)
 		res.Write([]byte(*config.SlugEndpoint + slug))
+		return
+	}
+}
+
+type Input struct {
+	URL string `json:"url"`
+}
+
+type Output struct {
+	Result string `json:"result"`
+}
+
+func ShortenHandler(res http.ResponseWriter, req *http.Request) {
+	if req.Method == http.MethodPost {
+		res.Header().Set("Content-Type", "application/json")
+		body, _ := io.ReadAll(req.Body)
+		var input Input
+		json.Unmarshal(body, &input)
+		if input.URL == "" {
+			res.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		slug := domain.GenerateSlug(config.SlugSize)
+		infrastructure.RAMRepository.Save(input.URL, slug)
+		resp, _ := json.Marshal(Output{Result: *config.SlugEndpoint + slug})
+		res.WriteHeader(http.StatusOK)
+		res.Write(resp)
 		return
 	}
 }

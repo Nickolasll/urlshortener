@@ -51,14 +51,16 @@ func Test_ShortenHandler(t *testing.T) {
 			assert.Equal(t, tt.want.statusCode, result.StatusCode)
 			assert.Equal(t, tt.want.contentType, result.Header.Get("Content-Type"))
 			defer result.Body.Close()
-			resBody, err := io.ReadAll(result.Body)
-			require.NoError(t, err)
+
 			if result.StatusCode == http.StatusOK {
+				resBody, err := io.ReadAll(result.Body)
+				require.NoError(t, err)
 				var output Output
 				json.Unmarshal(resBody, &output)
+				assert.NotEmpty(t, output.Result)
+				err = result.Body.Close()
+				require.NoError(t, err)
 			}
-			err = result.Body.Close()
-			require.NoError(t, err)
 		})
 	}
 }

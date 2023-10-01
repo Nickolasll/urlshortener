@@ -6,9 +6,10 @@ import (
 )
 
 var (
-	ServerEndpoint = flag.String("a", "localhost:8080", "Server endpoint")
-	SlugEndpoint   = flag.String("b", "http://localhost:8080", "Shorten endpoint")
-	SlugSize       = 8
+	ServerEndpoint  = flag.String("a", "localhost:8080", "Server endpoint")
+	SlugEndpoint    = flag.String("b", "http://localhost:8080", "Shorten endpoint")
+	FileStoragePath = flag.String("f", "/tmp/short-url-db.json", "File storage path")
+	SlugSize        = 8
 )
 
 func ParseFlags() {
@@ -20,5 +21,9 @@ func ParseFlags() {
 
 	if envBaseURL := os.Getenv("BASE_URL"); envBaseURL != "" {
 		*SlugEndpoint = envBaseURL
+	}
+
+	if envFileStoragePath, ok := os.LookupEnv("FILE_STORAGE_PATH"); ok {
+		*FileStoragePath = envFileStoragePath
 	}
 }

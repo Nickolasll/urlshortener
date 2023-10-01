@@ -13,7 +13,7 @@ import (
 func GetHandler(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodGet {
 		slug := req.URL.Path
-		value, ok := infrastructure.RAMRepository.Get(slug)
+		value, ok := infrastructure.Repository.Get(slug)
 		if ok {
 			res.Header().Add("Location", value)
 			res.WriteHeader(http.StatusTemporaryRedirect)
@@ -25,11 +25,11 @@ func GetHandler(res http.ResponseWriter, req *http.Request) {
 func PostHandler(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodPost {
 		body, _ := io.ReadAll(req.Body)
-		slug := domain.GenerateSlug(config.SlugSize)
-		infrastructure.RAMRepository.Save(string(body), slug)
+		short := domain.Shorten(string(body))
+		infrastructure.Repository.Save(short)
 		res.Header().Set("content-type", "text/plain")
 		res.WriteHeader(http.StatusCreated)
-		res.Write([]byte(*config.SlugEndpoint + slug))
+		res.Write([]byte(*config.SlugEndpoint + short.ShortURL))
 		return
 	}
 }
@@ -52,9 +52,9 @@ func ShortenHandler(res http.ResponseWriter, req *http.Request) {
 			res.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		slug := domain.GenerateSlug(config.SlugSize)
-		infrastructure.RAMRepository.Save(input.URL, slug)
-		resp, _ := json.Marshal(Output{Result: *config.SlugEndpoint + slug})
+		short := domain.Shorten(input.URL)
+		infrastructure.Repository.Save(short)
+		resp, _ := json.Marshal(Output{Result: *config.SlugEndpoint + short.ShortURL})
 		res.WriteHeader(http.StatusCreated)
 		res.Write(resp)
 		return

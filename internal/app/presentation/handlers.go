@@ -1,6 +1,7 @@
 package presentation
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
 
@@ -12,7 +13,8 @@ import (
 func GetHandler(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodGet {
 		slug := req.URL.Path
-		value, ok := infrastructure.RAMRepository.Get(slug)
+		repository := infrastructure.GetRepository()
+		value, ok := repository.Get(slug)
 		if ok {
 			res.Header().Add("Location", value)
 			res.WriteHeader(http.StatusTemporaryRedirect)
@@ -24,11 +26,40 @@ func GetHandler(res http.ResponseWriter, req *http.Request) {
 func PostHandler(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodPost {
 		body, _ := io.ReadAll(req.Body)
-		slug := domain.GenerateSlug(config.SlugSize)
-		infrastructure.RAMRepository.Save(string(body), slug)
+		short := domain.Shorten(string(body))
+		repository := infrastructure.GetRepository()
+		repository.Save(short)
 		res.Header().Set("content-type", "text/plain")
 		res.WriteHeader(http.StatusCreated)
-		res.Write([]byte(*config.SlugEndpoint + slug))
+		res.Write([]byte(*config.SlugEndpoint + short.ShortURL))
+		return
+	}
+}
+
+type Input struct {
+	URL string `json:"url"`
+}
+
+type Output struct {
+	Result string `json:"result"`
+}
+
+func ShortenHandler(res http.ResponseWriter, req *http.Request) {
+	if req.Method == http.MethodPost {
+		res.Header().Set("Content-Type", "application/json")
+		body, _ := io.ReadAll(req.Body)
+		var input Input
+		json.Unmarshal(body, &input)
+		if input.URL == "" {
+			res.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		short := domain.Shorten(input.URL)
+		repository := infrastructure.GetRepository()
+		repository.Save(short)
+		resp, _ := json.Marshal(Output{Result: *config.SlugEndpoint + short.ShortURL})
+		res.WriteHeader(http.StatusCreated)
+		res.Write(resp)
 		return
 	}
 }

@@ -3,8 +3,11 @@ package presentation
 import (
 	"net/http"
 
+	"github.com/Nickolasll/urlshortener/internal/app/infrastructure"
 	"github.com/go-chi/chi/v5"
 )
+
+var Repository = infrastructure.GetRepository()
 
 func MuxFactory() *http.ServeMux {
 	mux := http.NewServeMux()

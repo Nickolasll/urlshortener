@@ -7,15 +7,15 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-var Repository = infrastructure.GetRepository()
-
 func MuxFactory() *http.ServeMux {
+	infrastructure.RepositoryInit()
 	mux := http.NewServeMux()
 	mux.HandleFunc(`/`, mainPage)
 	return mux
 }
 
 func ChiFactory() *chi.Mux {
+	infrastructure.RepositoryInit()
 	router := chi.NewRouter()
 	router.Get("/{slug}", WithLogging(gzipMiddleware(GetHandler)))
 	router.Post("/", WithLogging(gzipMiddleware(PostHandler)))

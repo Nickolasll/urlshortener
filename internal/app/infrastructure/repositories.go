@@ -35,7 +35,10 @@ func (r FileRepository) Save(short domain.Short) error {
 		return err
 	}
 	defer file.Close()
-	data, _ := json.Marshal(short)
+	data, err := json.Marshal(short)
+	if err != nil {
+		return err
+	}
 	data = append(data, '\n')
 	file.Write(data)
 	return nil
@@ -56,6 +59,19 @@ func (r FileRepository) Get(slug string) (string, bool) {
 		return value, ok
 	}
 	return value, ok
+}
+
+var Repository domain.ShortRepositoryInerface = RAMRepository{
+	urlShortenerMap: map[string]string{},
+}
+
+func RepositoryInit() {
+	if *config.FileStoragePath != "" {
+		Repository = FileRepository{
+			cache:    map[string]string{},
+			filePath: *config.FileStoragePath,
+		}
+	}
 }
 
 func GetRepository() domain.ShortRepositoryInerface {

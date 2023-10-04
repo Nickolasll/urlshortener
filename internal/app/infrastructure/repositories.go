@@ -13,8 +13,9 @@ type RAMRepository struct {
 	urlShortenerMap map[string]string
 }
 
-func (r RAMRepository) Save(short domain.Short) {
+func (r RAMRepository) Save(short domain.Short) error {
 	r.urlShortenerMap[short.ShortURL] = short.OriginalURL
+	return nil
 }
 
 func (r RAMRepository) Get(slug string) (string, bool) {
@@ -27,13 +28,20 @@ type FileRepository struct {
 	cache    map[string]string
 }
 
-func (r FileRepository) Save(short domain.Short) {
+func (r FileRepository) Save(short domain.Short) error {
 	r.cache[short.ShortURL] = short.OriginalURL
-	file, _ := os.OpenFile(r.filePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	file, err := os.OpenFile(r.filePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		return err
+	}
 	defer file.Close()
-	data, _ := json.Marshal(short)
+	data, err := json.Marshal(short)
+	if err != nil {
+		return err
+	}
 	data = append(data, '\n')
 	file.Write(data)
+	return nil
 }
 
 func (r FileRepository) Get(slug string) (string, bool) {
@@ -53,15 +61,15 @@ func (r FileRepository) Get(slug string) (string, bool) {
 	return value, ok
 }
 
-var Repository domain.ShortRepositoryInerface = RAMRepository{
-	urlShortenerMap: map[string]string{},
-}
-
-func InitRepository() {
+func GetRepository() domain.ShortRepositoryInerface {
 	if *config.FileStoragePath != "" {
-		Repository = FileRepository{
+		return FileRepository{
 			cache:    map[string]string{},
 			filePath: *config.FileStoragePath,
+		}
+	} else {
+		return RAMRepository{
+			urlShortenerMap: map[string]string{},
 		}
 	}
 }

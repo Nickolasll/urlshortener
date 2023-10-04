@@ -13,7 +13,8 @@ import (
 func GetHandler(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodGet {
 		slug := req.URL.Path
-		value, ok := infrastructure.Repository.Get(slug)
+		repository := infrastructure.GetRepository()
+		value, ok := repository.Get(slug)
 		if ok {
 			res.Header().Add("Location", value)
 			res.WriteHeader(http.StatusTemporaryRedirect)
@@ -26,7 +27,8 @@ func PostHandler(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodPost {
 		body, _ := io.ReadAll(req.Body)
 		short := domain.Shorten(string(body))
-		infrastructure.Repository.Save(short)
+		repository := infrastructure.GetRepository()
+		repository.Save(short)
 		res.Header().Set("content-type", "text/plain")
 		res.WriteHeader(http.StatusCreated)
 		res.Write([]byte(*config.SlugEndpoint + short.ShortURL))
@@ -53,7 +55,8 @@ func ShortenHandler(res http.ResponseWriter, req *http.Request) {
 			return
 		}
 		short := domain.Shorten(input.URL)
-		infrastructure.Repository.Save(short)
+		repository := infrastructure.GetRepository()
+		repository.Save(short)
 		resp, _ := json.Marshal(Output{Result: *config.SlugEndpoint + short.ShortURL})
 		res.WriteHeader(http.StatusCreated)
 		res.Write(resp)

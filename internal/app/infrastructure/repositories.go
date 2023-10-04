@@ -61,19 +61,6 @@ func (r FileRepository) Get(slug string) (string, bool) {
 	return value, ok
 }
 
-var Repository domain.ShortRepositoryInerface = RAMRepository{
-	urlShortenerMap: map[string]string{},
-}
-
-func RepositoryInit() {
-	if *config.FileStoragePath != "" {
-		Repository = FileRepository{
-			cache:    map[string]string{},
-			filePath: *config.FileStoragePath,
-		}
-	}
-}
-
 func GetRepository() domain.ShortRepositoryInerface {
 	if *config.FileStoragePath == "" {
 		return RAMRepository{

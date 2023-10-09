@@ -15,6 +15,7 @@ func MuxFactory() *http.ServeMux {
 func ChiFactory() *chi.Mux {
 	router := chi.NewRouter()
 	router.Get("/{slug}", WithLogging(gzipMiddleware(GetHandler)))
+	router.Get("/ping", WithLogging(gzipMiddleware(PingHandler)))
 	router.Post("/", WithLogging(gzipMiddleware(PostHandler)))
 	router.Post("/api/shorten", WithLogging(gzipMiddleware(ShortenHandler)))
 	return router

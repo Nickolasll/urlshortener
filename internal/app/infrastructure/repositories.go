@@ -2,8 +2,13 @@ package infrastructure
 
 import (
 	"bufio"
+	"context"
+	"database/sql"
 	"encoding/json"
 	"os"
+	"time"
+
+	_ "github.com/jackc/pgx/v5/stdlib"
 
 	"github.com/Nickolasll/urlshortener/internal/app/config"
 	"github.com/Nickolasll/urlshortener/internal/app/domain"
@@ -21,6 +26,10 @@ func (r RAMRepository) Save(short domain.Short) error {
 func (r RAMRepository) Get(slug string) (string, bool) {
 	value, ok := r.urlShortenerMap[slug]
 	return value, ok
+}
+
+func (r RAMRepository) Ping() error {
+	return nil
 }
 
 type FileRepository struct {
@@ -59,6 +68,32 @@ func (r FileRepository) Get(slug string) (string, bool) {
 		return value, ok
 	}
 	return value, ok
+}
+
+func (r FileRepository) Ping() error {
+	return nil
+}
+
+type PostgresqlRepository struct {
+	dsn string
+}
+
+func (r PostgresqlRepository) Ping() error {
+	db, err := sql.Open("pgx", r.dsn)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+	if err = db.PingContext(ctx); err != nil {
+		return err
+	}
+	return nil
+}
+
+var Postgres = PostgresqlRepository{
+	dsn: *config.DatabaseDSN,
 }
 
 func GetRepository() domain.ShortRepositoryInerface {

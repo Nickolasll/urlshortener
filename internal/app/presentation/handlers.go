@@ -13,8 +13,7 @@ import (
 func GetHandler(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodGet {
 		slug := req.URL.Path
-		repository := infrastructure.GetRepository()
-		value, ok := repository.Get(slug)
+		value, ok := infrastructure.GetRepository().Get(slug)
 		if ok {
 			res.Header().Add("Location", value)
 			res.WriteHeader(http.StatusTemporaryRedirect)
@@ -27,8 +26,7 @@ func PostHandler(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodPost {
 		body, _ := io.ReadAll(req.Body)
 		short := domain.Shorten(string(body))
-		repository := infrastructure.GetRepository()
-		repository.Save(short)
+		infrastructure.GetRepository().Save(short)
 		res.Header().Set("content-type", "text/plain")
 		res.WriteHeader(http.StatusCreated)
 		res.Write([]byte(*config.SlugEndpoint + short.ShortURL))
@@ -55,11 +53,21 @@ func ShortenHandler(res http.ResponseWriter, req *http.Request) {
 			return
 		}
 		short := domain.Shorten(input.URL)
-		repository := infrastructure.GetRepository()
-		repository.Save(short)
+		infrastructure.GetRepository().Save(short)
 		resp, _ := json.Marshal(Output{Result: *config.SlugEndpoint + short.ShortURL})
 		res.WriteHeader(http.StatusCreated)
 		res.Write(resp)
 		return
+	}
+}
+
+func PingHandler(res http.ResponseWriter, req *http.Request) {
+	if req.Method == http.MethodGet {
+		err := infrastructure.Postgres.Ping()
+		if err != nil {
+			res.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		res.WriteHeader(http.StatusOK)
 	}
 }

@@ -63,7 +63,10 @@ func ShortenHandler(res http.ResponseWriter, req *http.Request) {
 
 func PingHandler(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodGet {
-		err := infrastructure.Postgres.Ping()
+		postgresRepository := infrastructure.PostgresqlRepository{
+			DSN: *config.DatabaseDSN,
+		}
+		err := postgresRepository.Ping()
 		if err != nil {
 			res.WriteHeader(http.StatusInternalServerError)
 			return

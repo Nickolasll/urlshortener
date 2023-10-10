@@ -67,7 +67,6 @@ func PingHandler(res http.ResponseWriter, req *http.Request) {
 			DSN: *config.DatabaseDSN,
 		}
 		err := postgresRepository.Ping()
-		err = postgresRepository.Init()
 		if err != nil {
 			res.WriteHeader(http.StatusInternalServerError)
 			return

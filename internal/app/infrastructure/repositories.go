@@ -151,12 +151,12 @@ func (r PostgresqlRepository) Get(slug string) (string, bool, error) {
 			shortener.short_url = $1::TEXT
 		;`
 	row := db.QueryRowContext(context.Background(), query, slug)
-	var original_url string
-	err = row.Scan(&original_url)
+	var originalURL string
+	err = row.Scan(&originalURL)
 	if err != nil {
 		return "", false, err
 	}
-	return original_url, true, nil
+	return originalURL, true, nil
 }
 
 func GetRepository() domain.ShortRepositoryInerface {

@@ -5,22 +5,22 @@ import (
 
 	"github.com/Nickolasll/urlshortener/internal/app/config"
 	"github.com/Nickolasll/urlshortener/internal/app/domain"
-	"github.com/Nickolasll/urlshortener/internal/app/infrastructure"
+	"github.com/Nickolasll/urlshortener/internal/app/infrastructure/repositories"
 	"github.com/go-chi/chi/v5"
 )
 
 func initRepository() domain.ShortRepositoryInerface {
 	if *config.DatabaseDSN != "" {
-		postgres := infrastructure.PostgresqlRepository{DSN: *config.DatabaseDSN}
+		postgres := repositories.PostgresqlRepository{DSN: *config.DatabaseDSN}
 		postgres.Init()
 		return postgres
 	} else if *config.FileStoragePath != "" {
-		return infrastructure.FileRepository{
+		return repositories.FileRepository{
 			Cache:    map[string]string{},
 			FilePath: *config.FileStoragePath,
 		}
 	} else {
-		return infrastructure.RAMRepository{
+		return repositories.RAMRepository{
 			Cache: map[string]string{},
 		}
 	}

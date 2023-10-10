@@ -7,7 +7,7 @@ import (
 
 	"github.com/Nickolasll/urlshortener/internal/app/config"
 	"github.com/Nickolasll/urlshortener/internal/app/domain"
-	"github.com/Nickolasll/urlshortener/internal/app/infrastructure"
+	"github.com/Nickolasll/urlshortener/internal/app/infrastructure/repositories"
 )
 
 func GetHandler(res http.ResponseWriter, req *http.Request) {
@@ -63,7 +63,7 @@ func ShortenHandler(res http.ResponseWriter, req *http.Request) {
 
 func PingHandler(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodGet {
-		postgresRepository := infrastructure.PostgresqlRepository{
+		postgresRepository := repositories.PostgresqlRepository{
 			DSN: *config.DatabaseDSN,
 		}
 		err := postgresRepository.Ping()

@@ -23,9 +23,9 @@ func (r RAMRepository) Save(short domain.Short) error {
 	return nil
 }
 
-func (r RAMRepository) Get(slug string) (string, bool) {
+func (r RAMRepository) Get(slug string) (string, bool, error) {
 	value, ok := r.urlShortenerMap[slug]
-	return value, ok
+	return value, ok, nil
 }
 
 func (r RAMRepository) Ping() error {
@@ -53,7 +53,7 @@ func (r FileRepository) Save(short domain.Short) error {
 	return nil
 }
 
-func (r FileRepository) Get(slug string) (string, bool) {
+func (r FileRepository) Get(slug string) (string, bool, error) {
 	value, ok := r.cache[slug]
 	if !ok {
 		file, _ := os.OpenFile(r.filePath, os.O_RDONLY|os.O_CREATE, 0666)
@@ -65,9 +65,9 @@ func (r FileRepository) Get(slug string) (string, bool) {
 			r.cache[short.ShortURL] = short.OriginalURL
 		}
 		value, ok := r.cache[slug]
-		return value, ok
+		return value, ok, nil
 	}
-	return value, ok
+	return value, ok, nil
 }
 
 func (r FileRepository) Ping() error {
@@ -92,15 +92,86 @@ func (r PostgresqlRepository) Ping() error {
 	return nil
 }
 
+func (r PostgresqlRepository) Init() error {
+	db, err := sql.Open("pgx", r.DSN)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	query := `
+		CREATE TABLE IF NOT EXISTS shortener (
+		id uuid NOT NULL PRIMARY KEY
+		, short_url varchar(10) NOT NULL
+		, original_url varchar(100) NOT NULL
+	)`
+	if _, err = db.ExecContext(context.Background(), query); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r PostgresqlRepository) Save(short domain.Short) error {
+	db, err := sql.Open("pgx", r.DSN)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	query := `
+		INSERT INTO shortener (
+			id
+			, short_url
+			, original_url
+		) VALUES (
+			$1::UUID
+			, $2::TEXT
+			, $3::TEXT
+		)`
+	_, err = db.ExecContext(
+		context.Background(),
+		query,
+		short.UUID,
+		short.ShortURL,
+		short.OriginalURL,
+	)
+	return err
+}
+
+func (r PostgresqlRepository) Get(slug string) (string, bool, error) {
+	db, err := sql.Open("pgx", r.DSN)
+	if err != nil {
+		return "", false, err
+	}
+	defer db.Close()
+	query := `
+		SELECT
+			shortener.original_url	
+		FROM
+			shortener
+		WHERE
+			shortener.short_url = $1::TEXT
+		;`
+	row := db.QueryRowContext(context.Background(), query, slug)
+	var original_url string
+	err = row.Scan(&original_url)
+	if err != nil {
+		return "", false, err
+	}
+	return original_url, true, nil
+}
+
 func GetRepository() domain.ShortRepositoryInerface {
-	if *config.FileStoragePath == "" {
-		return RAMRepository{
-			urlShortenerMap: map[string]string{},
-		}
-	} else {
+	if *config.DatabaseDSN != "" {
+		postgres := PostgresqlRepository{DSN: *config.DatabaseDSN}
+		postgres.Init()
+		return postgres
+	} else if *config.FileStoragePath != "" {
 		return FileRepository{
 			cache:    map[string]string{},
 			filePath: *config.FileStoragePath,
+		}
+	} else {
+		return RAMRepository{
+			urlShortenerMap: map[string]string{},
 		}
 	}
 }

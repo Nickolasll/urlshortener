@@ -13,7 +13,7 @@ import (
 func GetHandler(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodGet {
 		slug := req.URL.Path
-		value, ok := infrastructure.GetRepository().Get(slug)
+		value, ok, _ := infrastructure.GetRepository().Get(slug)
 		if ok {
 			res.Header().Add("Location", value)
 			res.WriteHeader(http.StatusTemporaryRedirect)
@@ -67,6 +67,7 @@ func PingHandler(res http.ResponseWriter, req *http.Request) {
 			DSN: *config.DatabaseDSN,
 		}
 		err := postgresRepository.Ping()
+		err = postgresRepository.Init()
 		if err != nil {
 			res.WriteHeader(http.StatusInternalServerError)
 			return

@@ -34,7 +34,7 @@ func TestRAMRepository(t *testing.T) {
 				urlShortenerMap: map[string]string{},
 			}
 			repository.Save(tt.args.short)
-			got, ok := repository.Get(tt.args.short.ShortURL)
+			got, ok, _ := repository.Get(tt.args.short.ShortURL)
 			assert.Equal(t, ok, true)
 			assert.Equal(t, got, tt.want)
 		})

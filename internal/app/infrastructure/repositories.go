@@ -10,21 +10,20 @@ import (
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 
-	"github.com/Nickolasll/urlshortener/internal/app/config"
 	"github.com/Nickolasll/urlshortener/internal/app/domain"
 )
 
 type RAMRepository struct {
-	urlShortenerMap map[string]string
+	Cache map[string]string
 }
 
 func (r RAMRepository) Save(short domain.Short) error {
-	r.urlShortenerMap[short.ShortURL] = short.OriginalURL
+	r.Cache[short.ShortURL] = short.OriginalURL
 	return nil
 }
 
 func (r RAMRepository) Get(slug string) (string, bool, error) {
-	value, ok := r.urlShortenerMap[slug]
+	value, ok := r.Cache[slug]
 	return value, ok, nil
 }
 
@@ -33,13 +32,13 @@ func (r RAMRepository) Ping() error {
 }
 
 type FileRepository struct {
-	filePath string
-	cache    map[string]string
+	FilePath string
+	Cache    map[string]string
 }
 
 func (r FileRepository) Save(short domain.Short) error {
-	r.cache[short.ShortURL] = short.OriginalURL
-	file, err := os.OpenFile(r.filePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	r.Cache[short.ShortURL] = short.OriginalURL
+	file, err := os.OpenFile(r.FilePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		return err
 	}
@@ -54,17 +53,17 @@ func (r FileRepository) Save(short domain.Short) error {
 }
 
 func (r FileRepository) Get(slug string) (string, bool, error) {
-	value, ok := r.cache[slug]
+	value, ok := r.Cache[slug]
 	if !ok {
-		file, _ := os.OpenFile(r.filePath, os.O_RDONLY|os.O_CREATE, 0666)
+		file, _ := os.OpenFile(r.FilePath, os.O_RDONLY|os.O_CREATE, 0666)
 		defer file.Close()
 		scanner := bufio.NewScanner(file)
 		for scanner.Scan() {
 			var short domain.Short
 			json.Unmarshal(scanner.Bytes(), &short)
-			r.cache[short.ShortURL] = short.OriginalURL
+			r.Cache[short.ShortURL] = short.OriginalURL
 		}
-		value, ok := r.cache[slug]
+		value, ok := r.Cache[slug]
 		return value, ok, nil
 	}
 	return value, ok, nil
@@ -157,21 +156,4 @@ func (r PostgresqlRepository) Get(slug string) (string, bool, error) {
 		return "", false, err
 	}
 	return originalURL, true, nil
-}
-
-func GetRepository() domain.ShortRepositoryInerface {
-	if *config.DatabaseDSN != "" {
-		postgres := PostgresqlRepository{DSN: *config.DatabaseDSN}
-		postgres.Init()
-		return postgres
-	} else if *config.FileStoragePath != "" {
-		return FileRepository{
-			cache:    map[string]string{},
-			filePath: *config.FileStoragePath,
-		}
-	} else {
-		return RAMRepository{
-			urlShortenerMap: map[string]string{},
-		}
-	}
 }

@@ -9,7 +9,7 @@ var (
 	ServerEndpoint  = flag.String("a", "localhost:8080", "Server endpoint")
 	SlugEndpoint    = flag.String("b", "http://localhost:8080", "Shorten endpoint")
 	FileStoragePath = flag.String("f", "/tmp/short-url-db.json", "File storage path")
-	DatabaseDSN     = flag.String("d", "postgresql://admin:admin@localhost:5432/postgres", "Database DSN")
+	DatabaseDSN     = flag.String("d", "", "Database DSN")
 	SlugSize        = 8
 )
 
@@ -28,7 +28,7 @@ func ParseFlags() {
 		*FileStoragePath = envFileStoragePath
 	}
 
-	if envDatabaseDSN := os.Getenv("DATABASE_DSN"); envDatabaseDSN != "" {
+	if envDatabaseDSN, ok := os.LookupEnv("DATABASE_DSN"); ok {
 		*DatabaseDSN = envDatabaseDSN
 	}
 }

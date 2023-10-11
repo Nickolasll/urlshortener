@@ -5,10 +5,9 @@ import (
 	"io"
 	"net/http"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/Nickolasll/urlshortener/internal/app/config"
 	"github.com/Nickolasll/urlshortener/internal/app/domain"
+	log "github.com/sirupsen/logrus"
 )
 
 type Input struct {
@@ -48,17 +47,11 @@ func GetHandler(res http.ResponseWriter, req *http.Request) {
 func PostHandler(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodPost {
 		body, _ := io.ReadAll(req.Body)
-		log.WithFields(log.Fields{
-			"input": string(body),
-		}).Info("PostHandler input")
 		short := domain.Shorten(string(body))
 		repository.Save(short)
 		res.Header().Set("content-type", "text/plain")
 		res.WriteHeader(http.StatusCreated)
 		res.Write([]byte(*config.SlugEndpoint + short.ShortURL))
-		log.WithFields(log.Fields{
-			"output": short.ShortURL,
-		}).Info("PostHandler output")
 		return
 	}
 }
@@ -73,17 +66,11 @@ func ShortenHandler(res http.ResponseWriter, req *http.Request) {
 			res.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		log.WithFields(log.Fields{
-			"input": input.URL,
-		}).Info("ShortenHandler input")
 		short := domain.Shorten(input.URL)
 		repository.Save(short)
 		resp, _ := json.Marshal(Output{Result: *config.SlugEndpoint + short.ShortURL})
 		res.WriteHeader(http.StatusCreated)
 		res.Write(resp)
-		log.WithFields(log.Fields{
-			"output": short.ShortURL,
-		}).Info("ShortenHandler input")
 		return
 	}
 }
@@ -103,9 +90,6 @@ func BatchShortenHandler(res http.ResponseWriter, req *http.Request) {
 		body, _ := io.ReadAll(req.Body)
 		var batchInput []BatchInput
 		json.Unmarshal(body, &batchInput)
-		log.WithFields(log.Fields{
-			"batchInput": batchInput,
-		}).Info("BatchShortenHandler input")
 		shorts := []domain.Short{}
 		batchOutput := []BatchOutput{}
 		for _, batch := range batchInput {
@@ -118,9 +102,6 @@ func BatchShortenHandler(res http.ResponseWriter, req *http.Request) {
 			batchOutput = append(batchOutput, output)
 		}
 		repository.BulkSave(shorts)
-		log.WithFields(log.Fields{
-			"batchOutput": batchOutput,
-		}).Info("BatchShortenHandler output")
 		resp, _ := json.Marshal(batchOutput)
 		res.WriteHeader(http.StatusCreated)
 		res.Write(resp)

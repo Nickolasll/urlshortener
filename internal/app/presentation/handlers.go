@@ -34,6 +34,7 @@ func GetHandler(res http.ResponseWriter, req *http.Request) {
 		slug := req.URL.Path
 		value, ok, _ := repository.Get(slug)
 		log.WithFields(log.Fields{
+			"slug":  slug,
 			"value": value,
 		}).Info("GetHandler result")
 		if ok {

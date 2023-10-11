@@ -7,8 +7,25 @@ import (
 
 	"github.com/Nickolasll/urlshortener/internal/app/config"
 	"github.com/Nickolasll/urlshortener/internal/app/domain"
-	"github.com/Nickolasll/urlshortener/internal/app/infrastructure/repositories"
 )
+
+type Input struct {
+	URL string `json:"url"`
+}
+
+type Output struct {
+	Result string `json:"result"`
+}
+
+type BatchInput struct {
+	CorrelationID string `json:"correlation_id"`
+	OriginalURL   string `json:"original_url"`
+}
+
+type BatchOutput struct {
+	CorrelationID string `json:"correlation_id"`
+	ShortURL      string `json:"short_url"`
+}
 
 func GetHandler(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodGet {
@@ -34,14 +51,6 @@ func PostHandler(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
-type Input struct {
-	URL string `json:"url"`
-}
-
-type Output struct {
-	Result string `json:"result"`
-}
-
 func ShortenHandler(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodPost {
 		res.Header().Set("Content-Type", "application/json")
@@ -63,14 +72,34 @@ func ShortenHandler(res http.ResponseWriter, req *http.Request) {
 
 func PingHandler(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodGet {
-		postgresRepository := repositories.PostgresqlRepository{
-			DSN: *config.DatabaseDSN,
-		}
-		err := postgresRepository.Ping()
-		if err != nil {
+		if repository.Ping() != nil {
 			res.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		res.WriteHeader(http.StatusOK)
+	}
+}
+
+func BatchShortenHandler(res http.ResponseWriter, req *http.Request) {
+	if req.Method == http.MethodPost {
+		res.Header().Set("Content-Type", "application/json")
+		body, _ := io.ReadAll(req.Body)
+		var batchInput []BatchInput
+		json.Unmarshal(body, &batchInput)
+		shorts := []domain.Short{}
+		batchOutput := []BatchOutput{}
+		for _, batch := range batchInput {
+			short := domain.Shorten(batch.OriginalURL)
+			shorts = append(shorts, short)
+			output := BatchOutput{
+				CorrelationID: batch.CorrelationID,
+				ShortURL:      short.ShortURL,
+			}
+			batchOutput = append(batchOutput, output)
+		}
+		repository.BulkSave(shorts)
+		resp, _ := json.Marshal(batchOutput)
+		res.WriteHeader(http.StatusCreated)
+		res.Write(resp)
+		return
 	}
 }

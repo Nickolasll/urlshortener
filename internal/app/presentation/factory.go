@@ -42,5 +42,6 @@ func ChiFactory() *chi.Mux {
 	router.Get("/ping", WithLogging(gzipMiddleware(PingHandler)))
 	router.Post("/", WithLogging(gzipMiddleware(PostHandler)))
 	router.Post("/api/shorten", WithLogging(gzipMiddleware(ShortenHandler)))
+	router.Post("/api/shorten/batch", WithLogging(gzipMiddleware(BatchShortenHandler)))
 	return router
 }

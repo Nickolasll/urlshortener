@@ -21,3 +21,10 @@ func (r RAMRepository) Get(slug string) (string, bool, error) {
 func (r RAMRepository) Ping() error {
 	return nil
 }
+
+func (r RAMRepository) BulkSave(shorts []domain.Short) error {
+	for _, short := range shorts {
+		r.Save(short)
+	}
+	return nil
+}

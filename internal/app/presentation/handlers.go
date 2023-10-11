@@ -92,7 +92,7 @@ func BatchShortenHandler(res http.ResponseWriter, req *http.Request) {
 			shorts = append(shorts, short)
 			output := BatchOutput{
 				CorrelationID: batch.CorrelationID,
-				ShortURL:      short.ShortURL,
+				ShortURL:      *config.SlugEndpoint + short.ShortURL,
 			}
 			batchOutput = append(batchOutput, output)
 		}

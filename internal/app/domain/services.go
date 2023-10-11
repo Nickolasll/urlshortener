@@ -2,6 +2,7 @@ package domain
 
 import (
 	"math/rand"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -11,9 +12,10 @@ import (
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 func GenerateSlug(size int) string {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	result := make([]byte, size)
 	for i := range result {
-		result[i] = letterBytes[rand.Intn(len(letterBytes))]
+		result[i] = letterBytes[r.Intn(len(letterBytes))]
 	}
 	return "/" + string(result)
 }

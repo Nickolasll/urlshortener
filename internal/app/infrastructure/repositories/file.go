@@ -63,11 +63,11 @@ func (r FileRepository) BulkSave(shorts []domain.Short) error {
 	defer file.Close()
 	data := []byte{}
 	for _, short := range shorts {
-		json_short, err := json.Marshal(short)
+		serialized, err := json.Marshal(short)
 		if err != nil {
 			return err
 		}
-		data = append(data, append(json_short, '\n')...)
+		data = append(data, append(serialized, '\n')...)
 		r.cache(short)
 	}
 	file.Write(data)

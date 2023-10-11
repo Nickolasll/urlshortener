@@ -5,6 +5,8 @@ import (
 	"io"
 	"net/http"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/Nickolasll/urlshortener/internal/app/config"
 	"github.com/Nickolasll/urlshortener/internal/app/domain"
 )
@@ -31,6 +33,9 @@ func GetHandler(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodGet {
 		slug := req.URL.Path
 		value, ok, _ := repository.Get(slug)
+		log.WithFields(log.Fields{
+			"value": value,
+		}).Info("GetHandler result")
 		if ok {
 			res.Header().Add("Location", value)
 			res.WriteHeader(http.StatusTemporaryRedirect)
@@ -85,6 +90,9 @@ func BatchShortenHandler(res http.ResponseWriter, req *http.Request) {
 		body, _ := io.ReadAll(req.Body)
 		var batchInput []BatchInput
 		json.Unmarshal(body, &batchInput)
+		log.WithFields(log.Fields{
+			"batchInput": batchInput,
+		}).Info("BatchShortenHandler input")
 		shorts := []domain.Short{}
 		batchOutput := []BatchOutput{}
 		for _, batch := range batchInput {
@@ -97,6 +105,9 @@ func BatchShortenHandler(res http.ResponseWriter, req *http.Request) {
 			batchOutput = append(batchOutput, output)
 		}
 		repository.BulkSave(shorts)
+		log.WithFields(log.Fields{
+			"batchOutput": batchOutput,
+		}).Info("BatchShortenHandler output")
 		resp, _ := json.Marshal(batchOutput)
 		res.WriteHeader(http.StatusCreated)
 		res.Write(resp)

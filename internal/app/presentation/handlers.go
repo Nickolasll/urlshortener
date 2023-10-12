@@ -7,7 +7,6 @@ import (
 
 	"github.com/Nickolasll/urlshortener/internal/app/config"
 	"github.com/Nickolasll/urlshortener/internal/app/domain"
-	log "github.com/sirupsen/logrus"
 )
 
 type Input struct {
@@ -31,12 +30,8 @@ type BatchOutput struct {
 func GetHandler(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodGet {
 		slug := req.URL.Path
-		value, ok, _ := repository.Get(slug)
-		log.WithFields(log.Fields{
-			"slug":  slug,
-			"value": value,
-		}).Info("GetHandler result")
-		if ok {
+		value, _ := repository.GetOriginalURL(slug)
+		if value != "" {
 			res.Header().Add("Location", value)
 			res.WriteHeader(http.StatusTemporaryRedirect)
 			return
@@ -48,7 +43,14 @@ func PostHandler(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodPost {
 		body, _ := io.ReadAll(req.Body)
 		short := domain.Shorten(string(body))
-		repository.Save(short)
+		err := repository.Save(short)
+		if err != nil {
+			slug, _ := repository.GetShortURL(short.OriginalURL)
+			resp, _ := json.Marshal(Output{Result: *config.SlugEndpoint + slug})
+			res.Write(resp)
+			res.WriteHeader(http.StatusConflict)
+			return
+		}
 		res.Header().Set("content-type", "text/plain")
 		res.WriteHeader(http.StatusCreated)
 		res.Write([]byte(*config.SlugEndpoint + short.ShortURL))
@@ -67,7 +69,14 @@ func ShortenHandler(res http.ResponseWriter, req *http.Request) {
 			return
 		}
 		short := domain.Shorten(input.URL)
-		repository.Save(short)
+		err := repository.Save(short)
+		if err != nil {
+			slug, _ := repository.GetShortURL(short.OriginalURL)
+			resp, _ := json.Marshal(Output{Result: *config.SlugEndpoint + slug})
+			res.Write(resp)
+			res.WriteHeader(http.StatusConflict)
+			return
+		}
 		resp, _ := json.Marshal(Output{Result: *config.SlugEndpoint + short.ShortURL})
 		res.WriteHeader(http.StatusCreated)
 		res.Write(resp)

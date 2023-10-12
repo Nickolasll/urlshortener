@@ -13,9 +13,9 @@ func (r RAMRepository) Save(short domain.Short) error {
 	return nil
 }
 
-func (r RAMRepository) Get(slug string) (string, bool, error) {
-	value, ok := r.Cache[slug]
-	return value, ok, nil
+func (r RAMRepository) GetOriginalURL(slug string) (string, error) {
+	value := r.Cache[slug]
+	return value, nil
 }
 
 func (r RAMRepository) Ping() error {
@@ -27,4 +27,9 @@ func (r RAMRepository) BulkSave(shorts []domain.Short) error {
 		r.Save(short)
 	}
 	return nil
+}
+
+func (r RAMRepository) GetShortURL(originalURL string) (string, error) {
+	key, _ := mapkey(r.Cache, originalURL)
+	return key, nil
 }

@@ -34,8 +34,7 @@ func TestRAMRepository(t *testing.T) {
 				Cache: map[string]string{},
 			}
 			repository.Save(tt.args.short)
-			got, ok, _ := repository.Get(tt.args.short.ShortURL)
-			assert.Equal(t, ok, true)
+			got, _ := repository.GetOriginalURL(tt.args.short.ShortURL)
 			assert.Equal(t, got, tt.want)
 		})
 	}

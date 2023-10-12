@@ -40,8 +40,12 @@ func (r PostgresqlRepository) Init() error {
 		CREATE TABLE IF NOT EXISTS shortener (
 		id uuid NOT NULL PRIMARY KEY
 		, short_url varchar(10) NOT NULL
-		, original_url varchar(100) NOT NULL
+		, original_url varchar(100) NOT NULL UNIQUE
 	)`
+	if _, err = db.ExecContext(context.Background(), query); err != nil {
+		return err
+	}
+	query = "CREATE INDEX short_url_idx on shortener(short_url)"
 	if _, err = db.ExecContext(context.Background(), query); err != nil {
 		return err
 	}
@@ -74,10 +78,10 @@ func (r PostgresqlRepository) Save(short domain.Short) error {
 	return err
 }
 
-func (r PostgresqlRepository) Get(slug string) (string, bool, error) {
+func (r PostgresqlRepository) GetOriginalURL(slug string) (string, error) {
 	db, err := sql.Open("pgx", r.DSN)
 	if err != nil {
-		return "", false, err
+		return "", err
 	}
 	defer db.Close()
 	query := `
@@ -92,9 +96,32 @@ func (r PostgresqlRepository) Get(slug string) (string, bool, error) {
 	var originalURL string
 	err = row.Scan(&originalURL)
 	if err != nil {
-		return "", false, err
+		return "", err
 	}
-	return originalURL, true, nil
+	return originalURL, nil
+}
+
+func (r PostgresqlRepository) GetShortURL(originalURL string) (string, error) {
+	db, err := sql.Open("pgx", r.DSN)
+	if err != nil {
+		return "", err
+	}
+	defer db.Close()
+	query := `
+		SELECT
+			shortener.short_url	
+		FROM
+			shortener
+		WHERE
+			shortener.original_url = $1::TEXT
+		;`
+	row := db.QueryRowContext(context.Background(), query, originalURL)
+	var short string
+	err = row.Scan(&short)
+	if err != nil {
+		return "", err
+	}
+	return short, nil
 }
 
 func (r PostgresqlRepository) BulkSave(shorts []domain.Short) error {

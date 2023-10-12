@@ -41,17 +41,16 @@ func GetHandler(res http.ResponseWriter, req *http.Request) {
 
 func PostHandler(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodPost {
+		res.Header().Set("content-type", "text/plain")
 		body, _ := io.ReadAll(req.Body)
 		short := domain.Shorten(string(body))
 		err := repository.Save(short)
 		if err != nil {
 			slug, _ := repository.GetShortURL(short.OriginalURL)
-			resp, _ := json.Marshal(Output{Result: *config.SlugEndpoint + slug})
-			res.Write(resp)
 			res.WriteHeader(http.StatusConflict)
+			res.Write([]byte(*config.SlugEndpoint + slug))
 			return
 		}
-		res.Header().Set("content-type", "text/plain")
 		res.WriteHeader(http.StatusCreated)
 		res.Write([]byte(*config.SlugEndpoint + short.ShortURL))
 		return
@@ -73,8 +72,8 @@ func ShortenHandler(res http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			slug, _ := repository.GetShortURL(short.OriginalURL)
 			resp, _ := json.Marshal(Output{Result: *config.SlugEndpoint + slug})
-			res.Write(resp)
 			res.WriteHeader(http.StatusConflict)
+			res.Write(resp)
 			return
 		}
 		resp, _ := json.Marshal(Output{Result: *config.SlugEndpoint + short.ShortURL})

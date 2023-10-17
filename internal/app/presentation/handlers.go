@@ -52,9 +52,9 @@ func PostHandler(res http.ResponseWriter, req *http.Request) {
 }
 
 func ShortenHandler(res http.ResponseWriter, req *http.Request) {
+	var input Input
 	res.Header().Set("Content-Type", "application/json")
 	body, _ := io.ReadAll(req.Body)
-	var input Input
 	json.Unmarshal(body, &input)
 	if input.URL == "" {
 		res.WriteHeader(http.StatusBadRequest)
@@ -81,9 +81,9 @@ func PingHandler(res http.ResponseWriter, req *http.Request) {
 }
 
 func BatchShortenHandler(res http.ResponseWriter, req *http.Request) {
+	var batchInput []BatchInput
 	res.Header().Set("Content-Type", "application/json")
 	body, _ := io.ReadAll(req.Body)
-	var batchInput []BatchInput
 	json.Unmarshal(body, &batchInput)
 	shorts := []domain.Short{}
 	batchOutput := []BatchOutput{}

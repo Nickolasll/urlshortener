@@ -79,6 +79,7 @@ func (r PostgresqlRepository) Save(short domain.Short) error {
 }
 
 func (r PostgresqlRepository) GetOriginalURL(slug string) (string, error) {
+	var originalURL string
 	db, err := sql.Open("pgx", r.DSN)
 	if err != nil {
 		return "", err
@@ -93,7 +94,6 @@ func (r PostgresqlRepository) GetOriginalURL(slug string) (string, error) {
 			shortener.short_url = $1::TEXT
 		;`
 	row := db.QueryRowContext(context.Background(), query, slug)
-	var originalURL string
 	err = row.Scan(&originalURL)
 	if err != nil {
 		return "", err
@@ -102,6 +102,7 @@ func (r PostgresqlRepository) GetOriginalURL(slug string) (string, error) {
 }
 
 func (r PostgresqlRepository) GetShortURL(originalURL string) (string, error) {
+	var short string
 	db, err := sql.Open("pgx", r.DSN)
 	if err != nil {
 		return "", err
@@ -116,7 +117,6 @@ func (r PostgresqlRepository) GetShortURL(originalURL string) (string, error) {
 			shortener.original_url = $1::TEXT
 		;`
 	row := db.QueryRowContext(context.Background(), query, originalURL)
-	var short string
 	err = row.Scan(&short)
 	if err != nil {
 		return "", err

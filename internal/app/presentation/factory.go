@@ -9,6 +9,8 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+var repository domain.ShortRepositoryInerface
+
 func initRepository() domain.ShortRepositoryInerface {
 	if *config.DatabaseDSN != "" {
 		postgres := repositories.PostgresqlRepository{DSN: *config.DatabaseDSN}
@@ -25,8 +27,6 @@ func initRepository() domain.ShortRepositoryInerface {
 		}
 	}
 }
-
-var repository domain.ShortRepositoryInerface
 
 func MuxFactory() *http.ServeMux {
 	repository = initRepository()

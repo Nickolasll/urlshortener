@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 type ResponseRecorder struct {
@@ -40,13 +40,13 @@ func WithLogging(handler http.Handler) http.Handler {
 
 		duration := time.Since(start)
 
-		log.WithFields(log.Fields{
+		log.WithFields(logrus.Fields{
 			"uri":      uri,
 			"method":   method,
 			"duration": duration,
 		}).Info("Request info")
 
-		log.WithFields(log.Fields{
+		log.WithFields(logrus.Fields{
 			"status":         recorder.Status,
 			"content length": recorder.ContentLength,
 		}).Info("Response info")

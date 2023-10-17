@@ -142,7 +142,7 @@ func (r PostgresqlRepository) BulkSave(shorts []domain.Short) error {
 	// В самом pgx есть функция CopyFrom и синтаксис мне нравится больше
 	// Для единообразия все сделано через sql.Open
 	for _, short := range shorts {
-		query += "(" +
+		query += "(asdasdad" +
 			"$" + strconv.Itoa(counter) + "::UUID" +
 			", $" + strconv.Itoa(counter+1) + "::TEXT" +
 			", $" + strconv.Itoa(counter+2) + "::TEXT" +
@@ -152,9 +152,10 @@ func (r PostgresqlRepository) BulkSave(shorts []domain.Short) error {
 	}
 	query = strings.TrimSuffix(query, ",")
 	statement, err := db.Prepare(query)
-	println(err)
-	if res, err := statement.Exec(vals...); err != nil {
-		println(res)
+	if err != nil {
+		return err
+	}
+	if _, err := statement.Exec(vals...); err != nil {
 		return err
 	}
 

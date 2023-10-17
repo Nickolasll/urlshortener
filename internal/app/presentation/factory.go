@@ -7,8 +7,10 @@ import (
 	"github.com/Nickolasll/urlshortener/internal/app/domain"
 	"github.com/Nickolasll/urlshortener/internal/app/infrastructure/repositories"
 	"github.com/go-chi/chi/v5"
+	"github.com/sirupsen/logrus"
 )
 
+var log = logrus.New()
 var repository domain.ShortRepositoryInerface
 
 func initRepository() domain.ShortRepositoryInerface {

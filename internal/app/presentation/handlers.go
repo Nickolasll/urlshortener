@@ -42,6 +42,7 @@ func PostHandler(res http.ResponseWriter, req *http.Request) {
 	short := domain.Shorten(string(body))
 	err := repository.Save(short)
 	if err != nil {
+
 		slug, _ := repository.GetShortURL(short.OriginalURL)
 		res.WriteHeader(http.StatusConflict)
 		res.Write([]byte(*config.SlugEndpoint + slug))

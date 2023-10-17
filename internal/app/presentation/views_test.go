@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/Nickolasll/urlshortener/internal/app/config"
+	"github.com/Nickolasll/urlshortener/internal/app/infrastructure/repositories"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -36,7 +37,7 @@ func Test_mainPage(t *testing.T) {
 		},
 		{
 			name:   "bad request",
-			body:   "https://practicum.yandex.ru/",
+			body:   "https://google.com/",
 			method: http.MethodPut,
 			want: want{
 				statusCode:  400,
@@ -46,6 +47,9 @@ func Test_mainPage(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		repository = repositories.RAMRepository{
+			Cache: map[string]string{},
+		}
 		t.Run(tt.name, func(t *testing.T) {
 			bodyReader := strings.NewReader(tt.body)
 			request := httptest.NewRequest(tt.method, "/", bodyReader)

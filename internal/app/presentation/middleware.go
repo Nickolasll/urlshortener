@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 type ResponseRecorder struct {
@@ -24,7 +24,7 @@ func (r *ResponseRecorder) WriteHeader(status int) {
 	r.ResponseWriter.WriteHeader(status)
 }
 
-func WithLogging(handlerFn http.HandlerFunc) http.HandlerFunc {
+func WithLogging(handler http.Handler) http.Handler {
 	logFn := func(res http.ResponseWriter, req *http.Request) {
 
 		recorder := &ResponseRecorder{
@@ -36,17 +36,17 @@ func WithLogging(handlerFn http.HandlerFunc) http.HandlerFunc {
 		uri := req.RequestURI
 		method := req.Method
 
-		handlerFn.ServeHTTP(recorder, req)
+		handler.ServeHTTP(recorder, req)
 
 		duration := time.Since(start)
 
-		log.WithFields(log.Fields{
+		log.WithFields(logrus.Fields{
 			"uri":      uri,
 			"method":   method,
 			"duration": duration,
 		}).Info("Request info")
 
-		log.WithFields(log.Fields{
+		log.WithFields(logrus.Fields{
 			"status":         recorder.Status,
 			"content length": recorder.ContentLength,
 		}).Info("Response info")
@@ -55,8 +55,8 @@ func WithLogging(handlerFn http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(logFn)
 }
 
-func gzipMiddleware(handlerFn http.HandlerFunc) http.HandlerFunc {
-	return func(writer http.ResponseWriter, reader *http.Request) {
+func gzipMiddleware(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(writer http.ResponseWriter, reader *http.Request) {
 		originalWriter := writer
 
 		acceptEncoding := reader.Header.Get("Accept-Encoding")
@@ -79,6 +79,6 @@ func gzipMiddleware(handlerFn http.HandlerFunc) http.HandlerFunc {
 			defer cr.Close()
 		}
 
-		handlerFn.ServeHTTP(originalWriter, reader)
-	}
+		handler.ServeHTTP(originalWriter, reader)
+	})
 }

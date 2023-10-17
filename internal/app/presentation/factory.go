@@ -2,6 +2,7 @@ package presentation
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/Nickolasll/urlshortener/internal/app/config"
 	"github.com/Nickolasll/urlshortener/internal/app/domain"
@@ -15,7 +16,7 @@ var repository domain.ShortRepositoryInerface
 
 func initRepository() domain.ShortRepositoryInerface {
 	if *config.DatabaseDSN != "" {
-		postgres := repositories.PostgresqlRepository{DSN: *config.DatabaseDSN}
+		postgres := repositories.PostgresqlRepository{DSN: *config.DatabaseDSN, Timeout: 5 * time.Second}
 		postgres.Init()
 		return postgres
 	} else if *config.FileStoragePath != "" {

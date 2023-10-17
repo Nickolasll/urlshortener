@@ -13,7 +13,8 @@ import (
 )
 
 type PostgresqlRepository struct {
-	DSN string
+	DSN     string
+	Timeout time.Duration
 }
 
 func (r PostgresqlRepository) Ping() error {
@@ -22,7 +23,7 @@ func (r PostgresqlRepository) Ping() error {
 		return err
 	}
 	defer db.Close()
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), r.Timeout)
 	defer cancel()
 	if err = db.PingContext(ctx); err != nil {
 		return err
@@ -36,6 +37,8 @@ func (r PostgresqlRepository) Init() error {
 		return err
 	}
 	defer db.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), r.Timeout)
+	defer cancel()
 	query := `
 		CREATE TABLE IF NOT EXISTS shortener (
 		id uuid NOT NULL PRIMARY KEY
@@ -46,7 +49,7 @@ func (r PostgresqlRepository) Init() error {
 		return err
 	}
 	query = "CREATE INDEX short_url_idx on shortener(short_url)"
-	if _, err = db.ExecContext(context.Background(), query); err != nil {
+	if _, err = db.ExecContext(ctx, query); err != nil {
 		return err
 	}
 	return nil
@@ -85,6 +88,8 @@ func (r PostgresqlRepository) GetOriginalURL(slug string) (string, error) {
 		return "", err
 	}
 	defer db.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), r.Timeout)
+	defer cancel()
 	query := `
 		SELECT
 			shortener.original_url	
@@ -93,7 +98,7 @@ func (r PostgresqlRepository) GetOriginalURL(slug string) (string, error) {
 		WHERE
 			shortener.short_url = $1::TEXT
 		;`
-	row := db.QueryRowContext(context.Background(), query, slug)
+	row := db.QueryRowContext(ctx, query, slug)
 	err = row.Scan(&originalURL)
 	if err != nil {
 		return "", err
@@ -108,6 +113,8 @@ func (r PostgresqlRepository) GetShortURL(originalURL string) (string, error) {
 		return "", err
 	}
 	defer db.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), r.Timeout)
+	defer cancel()
 	query := `
 		SELECT
 			shortener.short_url	
@@ -116,7 +123,7 @@ func (r PostgresqlRepository) GetShortURL(originalURL string) (string, error) {
 		WHERE
 			shortener.original_url = $1::TEXT
 		;`
-	row := db.QueryRowContext(context.Background(), query, originalURL)
+	row := db.QueryRowContext(ctx, query, originalURL)
 	err = row.Scan(&short)
 	if err != nil {
 		return "", err
@@ -130,6 +137,8 @@ func (r PostgresqlRepository) BulkSave(shorts []domain.Short) error {
 		return err
 	}
 	defer db.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), r.Timeout)
+	defer cancel()
 	query := `
 		INSERT INTO shortener(
 			id
@@ -155,7 +164,7 @@ func (r PostgresqlRepository) BulkSave(shorts []domain.Short) error {
 	if err != nil {
 		return err
 	}
-	if _, err := statement.Exec(vals...); err != nil {
+	if _, err := statement.ExecContext(ctx, vals...); err != nil {
 		return err
 	}
 

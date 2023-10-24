@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/Nickolasll/urlshortener/internal/app/domain"
 	"github.com/Nickolasll/urlshortener/internal/app/infrastructure/repositories"
 
 	"github.com/stretchr/testify/assert"
@@ -44,7 +45,8 @@ func Test_ShortenHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			repository = repositories.RAMRepository{
-				Cache: map[string]string{},
+				Cache:     map[string]string{},
+				ListCache: []domain.Short{},
 			}
 			bodyReader := bytes.NewReader(tt.body)
 			request := httptest.NewRequest(http.MethodPost, "/api/shorten", bodyReader)

@@ -21,12 +21,14 @@ func initRepository() domain.ShortRepositoryInerface {
 		return postgres
 	} else if *config.FileStoragePath != "" {
 		return repositories.FileRepository{
-			Cache:    map[string]string{},
-			FilePath: *config.FileStoragePath,
+			Cache:     map[string]string{},
+			FilePath:  *config.FileStoragePath,
+			ListCache: []domain.Short{},
 		}
 	} else {
 		return repositories.RAMRepository{
-			Cache: map[string]string{},
+			Cache:     map[string]string{},
+			ListCache: []domain.Short{},
 		}
 	}
 }

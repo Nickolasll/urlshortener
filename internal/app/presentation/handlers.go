@@ -1,6 +1,7 @@
 package presentation
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -32,6 +33,15 @@ type FindURLsResult struct {
 	OriginalURL string `json:"original_url"`
 }
 
+func getUserID(con context.Context) string {
+	userID := con.Value(userIDKey)
+	if userID != nil {
+		return userID.(string)
+	} else {
+		return ""
+	}
+}
+
 func GetHandler(res http.ResponseWriter, req *http.Request) {
 	slug := req.URL.Path
 	value, _ := repository.GetOriginalURL(slug)
@@ -44,7 +54,7 @@ func GetHandler(res http.ResponseWriter, req *http.Request) {
 func PostHandler(res http.ResponseWriter, req *http.Request) {
 	res.Header().Set("content-type", "text/plain")
 	body, _ := io.ReadAll(req.Body)
-	userID := req.Context().Value(userIDKey).(string)
+	userID := getUserID(req.Context())
 	short := domain.Shorten(string(body), userID)
 	err := repository.Save(short)
 	if err != nil {
@@ -66,7 +76,7 @@ func ShortenHandler(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	userID := req.Context().Value(userIDKey).(string)
+	userID := getUserID(req.Context())
 	short := domain.Shorten(input.URL, userID)
 	err := repository.Save(short)
 	if err != nil {
@@ -94,7 +104,7 @@ func BatchShortenHandler(res http.ResponseWriter, req *http.Request) {
 	json.Unmarshal(body, &batchInput)
 	shorts := []domain.Short{}
 	batchOutput := []BatchOutput{}
-	userID := req.Context().Value(userIDKey).(string)
+	userID := getUserID(req.Context())
 	for _, batch := range batchInput {
 		short := domain.Shorten(batch.OriginalURL, userID)
 		shorts = append(shorts, short)
@@ -113,7 +123,7 @@ func BatchShortenHandler(res http.ResponseWriter, req *http.Request) {
 func FindURLs(res http.ResponseWriter, req *http.Request) {
 	var URLResults []FindURLsResult
 	res.Header().Set("Content-Type", "application/json")
-	userID := req.Context().Value(userIDKey).(string)
+	userID := getUserID(req.Context())
 	shorts, _ := repository.FindByUserID(userID)
 	if len(shorts) == 0 {
 		res.WriteHeader(http.StatusNoContent)

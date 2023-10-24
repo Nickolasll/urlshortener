@@ -49,7 +49,7 @@ func IsValid(tokenString string) bool {
 	return true
 }
 
-func GetUserId(tokenString string) string {
+func GetUserID(tokenString string) string {
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(
 		tokenString,

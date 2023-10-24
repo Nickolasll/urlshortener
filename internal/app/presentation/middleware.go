@@ -104,8 +104,8 @@ func setCookie(handlerFn http.HandlerFunc) http.HandlerFunc {
 			}
 			http.SetCookie(writer, cookie)
 		}
-		userId := auth.GetUserId(cookie.Value)
-		ctx := context.WithValue(reader.Context(), userIDKey, userId)
+		UserID := auth.GetUserID(cookie.Value)
+		ctx := context.WithValue(reader.Context(), userIDKey, UserID)
 		handlerFn.ServeHTTP(writer, reader.WithContext(ctx))
 	}
 }
@@ -117,8 +117,8 @@ func authorize(handlerFn http.HandlerFunc) http.HandlerFunc {
 			writer.WriteHeader(http.StatusUnauthorized)
 			return
 		}
-		userId := auth.GetUserId(cookie.Value)
-		ctx := context.WithValue(reader.Context(), userIDKey, userId)
+		UserID := auth.GetUserID(cookie.Value)
+		ctx := context.WithValue(reader.Context(), userIDKey, UserID)
 		handlerFn.ServeHTTP(writer, reader.WithContext(ctx))
 	}
 }

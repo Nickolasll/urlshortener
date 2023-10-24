@@ -221,7 +221,7 @@ func (r PostgresqlRepository) FindByUserID(userID string) ([]domain.Short, error
 			&short.OriginalURL,
 			&short.UserID,
 		)
-		if err == nil && rows.Err() != nil {
+		if err == nil && rows.Err() == nil {
 			shorts = append(shorts, short)
 		}
 	}

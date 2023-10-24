@@ -95,5 +95,11 @@ func (r FileRepository) GetShortURL(originalURL string) (string, error) {
 }
 
 func (r FileRepository) FindByUserID(userID string) ([]domain.Short, error) {
-	return r.ListCache, nil
+	shorts := []domain.Short{}
+	for _, short := range r.ListCache {
+		if short.UserID == userID {
+			shorts = append(shorts, short)
+		}
+	}
+	return shorts, nil
 }

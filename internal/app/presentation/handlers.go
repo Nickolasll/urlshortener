@@ -131,7 +131,7 @@ func FindURLs(res http.ResponseWriter, req *http.Request) {
 	}
 	for _, short := range shorts {
 		result := FindURLsResult{
-			ShortURL:    short.ShortURL,
+			ShortURL:    *config.SlugEndpoint + short.ShortURL,
 			OriginalURL: short.OriginalURL,
 		}
 		URLResults = append(URLResults, result)

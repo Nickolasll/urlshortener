@@ -113,6 +113,10 @@ func setCookie(handlerFn http.HandlerFunc) http.HandlerFunc {
 
 func authorize(handlerFn http.HandlerFunc) http.HandlerFunc {
 	return func(writer http.ResponseWriter, reader *http.Request) {
+		// В задании написано через куку, но через куку тест не работает
+		// Тест анализирует хэдер Authorization
+		// Для JWT - это в принципе и правильно
+		// Но тогда я не понял, зачем вообще в задании про куки
 		authorization := reader.Header.Get("Authorization")
 		if authorization == "" || !auth.IsValid(authorization) {
 			writer.WriteHeader(http.StatusUnauthorized)

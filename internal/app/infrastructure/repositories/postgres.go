@@ -212,6 +212,7 @@ func (r PostgresqlRepository) FindByUserID(userID string) ([]domain.Short, error
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 	for rows.Next() {
 		var short domain.Short
 		err = rows.Scan(
@@ -220,7 +221,7 @@ func (r PostgresqlRepository) FindByUserID(userID string) ([]domain.Short, error
 			&short.OriginalURL,
 			&short.UserID,
 		)
-		if err == nil {
+		if err == nil && rows.Err() != nil {
 			shorts = append(shorts, short)
 		}
 	}

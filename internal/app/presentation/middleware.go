@@ -93,11 +93,11 @@ func compress(handler http.Handler) http.Handler {
 func setCookie(handlerFn http.HandlerFunc) http.HandlerFunc {
 	return func(writer http.ResponseWriter, reader *http.Request) {
 		var cookie *http.Cookie
-		cookie, err := reader.Cookie("JWT")
+		cookie, err := reader.Cookie("Authorization")
 		if err != nil || !auth.IsValid(cookie.Value) {
 			token, _ := auth.IssueToken()
 			cookie = &http.Cookie{
-				Name:   "JWT",
+				Name:   "Authorization",
 				Value:  token,
 				MaxAge: config.TokenExp,
 				Secure: true,
@@ -112,7 +112,7 @@ func setCookie(handlerFn http.HandlerFunc) http.HandlerFunc {
 
 func authorize(handlerFn http.HandlerFunc) http.HandlerFunc {
 	return func(writer http.ResponseWriter, reader *http.Request) {
-		cookie, err := reader.Cookie("JWT")
+		cookie, err := reader.Cookie("Authorization")
 		if err != nil || !auth.IsValid(cookie.Value) {
 			writer.WriteHeader(http.StatusUnauthorized)
 			return

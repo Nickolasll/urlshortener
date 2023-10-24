@@ -16,7 +16,7 @@ var repository domain.ShortRepositoryInerface
 
 func initRepository() domain.ShortRepositoryInerface {
 	if *config.DatabaseDSN != "" {
-		postgres := repositories.PostgresqlRepository{DSN: *config.DatabaseDSN, Timeout: 5 * time.Second}
+		postgres := repositories.PostgresqlRepository{DSN: *config.DatabaseDSN, Timeout: 10 * time.Second}
 		postgres.Init()
 		return postgres
 	} else if *config.FileStoragePath != "" {
@@ -41,13 +41,14 @@ func MuxFactory() *http.ServeMux {
 func ChiFactory() *chi.Mux {
 	repository = initRepository()
 	router := chi.NewRouter()
-	router.Use(WithLogging)
-	router.Use(gzipMiddleware)
+	router.Use(logging)
+	router.Use(compress)
 
 	router.Get("/{slug}", GetHandler)
 	router.Get("/ping", PingHandler)
-	router.Post("/", PostHandler)
-	router.Post("/api/shorten", ShortenHandler)
-	router.Post("/api/shorten/batch", BatchShortenHandler)
+	router.Post("/", setCookie(PostHandler))
+	router.Post("/api/shorten", setCookie(ShortenHandler))
+	router.Post("/api/shorten/batch", setCookie(BatchShortenHandler))
+	router.Get("/api/user/urls", authorize(FindURLs))
 	return router
 }

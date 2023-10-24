@@ -20,10 +20,11 @@ func GenerateSlug(size int) string {
 	return "/" + string(result)
 }
 
-func Shorten(url string) Short {
+func Shorten(url string, userID string) Short {
 	return Short{
 		UUID:        uuid.New().String(),
 		ShortURL:    GenerateSlug(config.SlugSize),
 		OriginalURL: url,
+		UserID:      userID,
 	}
 }

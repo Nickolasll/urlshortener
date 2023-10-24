@@ -6,4 +6,5 @@ type ShortRepositoryInerface interface {
 	Ping() error
 	BulkSave(shorts []Short) error
 	GetShortURL(originalURL string) (string, error)
+	FindByUserID(userID string) ([]Short, error)
 }

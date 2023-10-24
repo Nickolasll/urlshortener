@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"database/sql"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -44,11 +45,16 @@ func (r PostgresqlRepository) Init() error {
 		id uuid NOT NULL PRIMARY KEY
 		, short_url varchar(10) NOT NULL
 		, original_url varchar(100) NOT NULL UNIQUE
+		, user_id uuid NOT NULL
 	)`
 	if _, err = db.ExecContext(context.Background(), query); err != nil {
 		return err
 	}
 	query = "CREATE INDEX short_url_idx on shortener(short_url)"
+	if _, err = db.ExecContext(ctx, query); err != nil {
+		return err
+	}
+	query = "CREATE INDEX user_id_idx on shortener(user_id)"
 	if _, err = db.ExecContext(ctx, query); err != nil {
 		return err
 	}
@@ -66,10 +72,12 @@ func (r PostgresqlRepository) Save(short domain.Short) error {
 			id
 			, short_url
 			, original_url
+			, user_id
 		) VALUES (
 			$1::UUID
 			, $2::TEXT
 			, $3::TEXT
+			, $4::UUID
 		)`
 	_, err = db.ExecContext(
 		context.Background(),
@@ -77,6 +85,7 @@ func (r PostgresqlRepository) Save(short domain.Short) error {
 		short.UUID,
 		short.ShortURL,
 		short.OriginalURL,
+		short.UserID,
 	)
 	return err
 }
@@ -144,6 +153,7 @@ func (r PostgresqlRepository) BulkSave(shorts []domain.Short) error {
 			id
 			, short_url
 			, original_url
+			, user_id
 		) 
 		VALUES `
 	vals := []interface{}{}
@@ -155,9 +165,16 @@ func (r PostgresqlRepository) BulkSave(shorts []domain.Short) error {
 			"$" + strconv.Itoa(counter) + "::UUID" +
 			", $" + strconv.Itoa(counter+1) + "::TEXT" +
 			", $" + strconv.Itoa(counter+2) + "::TEXT" +
+			", $" + strconv.Itoa(counter+3) + "::UUID" +
 			"),"
-		vals = append(vals, short.UUID, short.ShortURL, short.OriginalURL)
-		counter += 3
+		vals = append(
+			vals,
+			short.UUID,
+			short.ShortURL,
+			short.OriginalURL,
+			short.UserID,
+		)
+		counter += reflect.TypeOf(domain.Short{}).NumField()
 	}
 	query = strings.TrimSuffix(query, ",")
 	statement, err := db.Prepare(query)
@@ -169,4 +186,43 @@ func (r PostgresqlRepository) BulkSave(shorts []domain.Short) error {
 	}
 
 	return nil
+}
+
+func (r PostgresqlRepository) FindByUserID(userID string) ([]domain.Short, error) {
+	shorts := []domain.Short{}
+	db, err := sql.Open("pgx", r.DSN)
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), r.Timeout)
+	defer cancel()
+	query := `
+		SELECT
+			id
+			, short_url
+			, original_url
+			, user_id
+		FROM
+			shortener
+		WHERE
+			shortener.user_id = $1::UUID
+		;`
+	rows, err := db.QueryContext(ctx, query, userID)
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		var short domain.Short
+		err = rows.Scan(
+			&short.UUID,
+			&short.ShortURL,
+			&short.OriginalURL,
+			&short.UserID,
+		)
+		if err == nil {
+			shorts = append(shorts, short)
+		}
+	}
+	return shorts, nil
 }

@@ -9,8 +9,9 @@ import (
 )
 
 type FileRepository struct {
-	FilePath string
-	Cache    map[string]string
+	FilePath  string
+	Cache     map[string]string
+	ListCache []domain.Short
 }
 
 func (r FileRepository) loadCache() error {
@@ -30,6 +31,7 @@ func (r FileRepository) loadCache() error {
 
 func (r FileRepository) cache(short domain.Short) {
 	r.Cache[short.ShortURL] = short.OriginalURL
+	r.ListCache = append(r.ListCache, short)
 }
 
 func (r FileRepository) Save(short domain.Short) error {
@@ -90,4 +92,8 @@ func (r FileRepository) GetShortURL(originalURL string) (string, error) {
 		key, _ = mapkey(r.Cache, originalURL)
 	}
 	return key, nil
+}
+
+func (r FileRepository) FindByUserID(userID string) ([]domain.Short, error) {
+	return r.ListCache, nil
 }

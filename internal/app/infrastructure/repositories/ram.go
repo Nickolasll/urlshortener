@@ -5,11 +5,13 @@ import (
 )
 
 type RAMRepository struct {
-	Cache map[string]string
+	Cache     map[string]string
+	ListCache []domain.Short
 }
 
 func (r RAMRepository) Save(short domain.Short) error {
 	r.Cache[short.ShortURL] = short.OriginalURL
+	r.ListCache = append(r.ListCache, short)
 	return nil
 }
 
@@ -32,4 +34,8 @@ func (r RAMRepository) BulkSave(shorts []domain.Short) error {
 func (r RAMRepository) GetShortURL(originalURL string) (string, error) {
 	key, _ := mapkey(r.Cache, originalURL)
 	return key, nil
+}
+
+func (r RAMRepository) FindByUserID(userID string) ([]domain.Short, error) {
+	return r.ListCache, nil
 }

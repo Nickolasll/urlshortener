@@ -93,17 +93,16 @@ func compress(handler http.Handler) http.Handler {
 func setCookie(handlerFn http.HandlerFunc) http.HandlerFunc {
 	return func(writer http.ResponseWriter, reader *http.Request) {
 		var cookie *http.Cookie
-		cookie, err := reader.Cookie("Authorization")
+		cookie, err := reader.Cookie("authorization")
 		if err != nil || !auth.IsValid(cookie.Value) {
 			token, _ := auth.IssueToken()
 			cookie = &http.Cookie{
-				Name:   "Authorization",
+				Name:   "authorization",
 				Value:  token,
 				MaxAge: config.TokenExp,
-				Secure: true,
 			}
 			http.SetCookie(writer, cookie)
-			writer.Header().Add("Authorization", token)
+			// writer.Header().Add("Authorization", token)
 		}
 		UserID := auth.GetUserID(cookie.Value)
 		ctx := context.WithValue(reader.Context(), userIDKey, UserID)
@@ -117,12 +116,13 @@ func authorize(handlerFn http.HandlerFunc) http.HandlerFunc {
 		// Тест анализирует хэдер Authorization
 		// Для JWT - это в принципе и правильно
 		// Но тогда я не понял, зачем вообще в задании про куки
-		authorization := reader.Header.Get("Authorization")
-		if authorization == "" || !auth.IsValid(authorization) {
+		// authorization := reader.Header.Get("Authorization")
+		cookie, err := reader.Cookie("authorization")
+		if err != nil || !auth.IsValid(cookie.Value) {
 			writer.WriteHeader(http.StatusUnauthorized)
 			return
 		}
-		UserID := auth.GetUserID(authorization)
+		UserID := auth.GetUserID(cookie.Value)
 		ctx := context.WithValue(reader.Context(), userIDKey, UserID)
 		handlerFn.ServeHTTP(writer, reader.WithContext(ctx))
 	}

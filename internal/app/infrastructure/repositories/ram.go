@@ -1,8 +1,6 @@
 package repositories
 
 import (
-	"slices"
-
 	"github.com/Nickolasll/urlshortener/internal/app/domain"
 )
 
@@ -46,9 +44,18 @@ func (r RAMRepository) FindByUserID(userID string) ([]domain.Short, error) {
 	return shorts, nil
 }
 
+func contains(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
+}
+
 func (r RAMRepository) BulkDelete(shortURLs []string, userID string) error {
 	for key, short := range r.Cache {
-		if slices.Contains(shortURLs, short.ShortURL) && short.UserID == userID {
+		if contains(shortURLs, short.ShortURL) && short.UserID == userID {
 			delete(r.Cache, key)
 		}
 	}

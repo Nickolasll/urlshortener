@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"encoding/json"
 	"os"
-	"slices"
 
 	"github.com/Nickolasll/urlshortener/internal/app/domain"
 )
@@ -105,7 +104,7 @@ func (r FileRepository) FindByUserID(userID string) ([]domain.Short, error) {
 
 func (r FileRepository) BulkDelete(shortURLs []string, userID string) error {
 	for key, short := range r.Cache {
-		if slices.Contains(shortURLs, short.ShortURL) && short.UserID == userID {
+		if contains(shortURLs, short.ShortURL) && short.UserID == userID {
 			short.Deleted = true
 			r.Cache[key] = short
 		}

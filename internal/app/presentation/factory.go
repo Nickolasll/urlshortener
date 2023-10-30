@@ -21,14 +21,12 @@ func initRepository() domain.ShortRepositoryInerface {
 		return postgres
 	} else if *config.FileStoragePath != "" {
 		return repositories.FileRepository{
-			Cache:     map[string]string{},
-			FilePath:  *config.FileStoragePath,
-			ListCache: []domain.Short{},
+			Cache:    map[string]domain.Short{},
+			FilePath: *config.FileStoragePath,
 		}
 	} else {
 		return repositories.RAMRepository{
-			Cache:     map[string]string{},
-			ListCache: []domain.Short{},
+			Cache: map[string]domain.Short{},
 		}
 	}
 }
@@ -46,11 +44,12 @@ func ChiFactory() *chi.Mux {
 	router.Use(logging)
 	router.Use(compress)
 
-	router.Get("/{slug}", GetHandler)
+	router.Get("/{slug}", ExpandHandler)
 	router.Get("/ping", PingHandler)
 	router.Post("/", setCookie(PostHandler))
 	router.Post("/api/shorten", setCookie(ShortenHandler))
 	router.Post("/api/shorten/batch", setCookie(BatchShortenHandler))
 	router.Get("/api/user/urls", authorize(FindURLs))
+	router.Delete("/api/user/urls", authorize(Delete))
 	return router
 }

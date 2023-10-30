@@ -46,6 +46,7 @@ func (r PostgresqlRepository) Init() error {
 		, short_url varchar(10) NOT NULL
 		, original_url varchar(100) NOT NULL UNIQUE
 		, user_id uuid NOT NULL
+		, deleted boolean NOT NULL
 	)`
 	if _, err = db.ExecContext(context.Background(), query); err != nil {
 		return err
@@ -73,11 +74,13 @@ func (r PostgresqlRepository) Save(short domain.Short) error {
 			, short_url
 			, original_url
 			, user_id
+			, deleted
 		) VALUES (
 			$1::UUID
 			, $2::TEXT
 			, $3::TEXT
 			, $4::UUID
+			, $5::BOOLEAN
 		)`
 	_, err = db.ExecContext(
 		context.Background(),
@@ -86,33 +89,44 @@ func (r PostgresqlRepository) Save(short domain.Short) error {
 		short.ShortURL,
 		short.OriginalURL,
 		short.UserID,
+		short.Deleted,
 	)
 	return err
 }
 
-func (r PostgresqlRepository) GetOriginalURL(slug string) (string, error) {
-	var originalURL string
+func (r PostgresqlRepository) GetByShortURL(slug string) (domain.Short, error) {
+	var short domain.Short
 	db, err := sql.Open("pgx", r.DSN)
 	if err != nil {
-		return "", err
+		return short, err
 	}
 	defer db.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), r.Timeout)
 	defer cancel()
 	query := `
 		SELECT
-			shortener.original_url	
+			shortener.id
+			, shortener.short_url
+			, shortener.original_url
+			, shortener.user_id
+			, shortener.deleted
 		FROM
 			shortener
 		WHERE
 			shortener.short_url = $1::TEXT
 		;`
 	row := db.QueryRowContext(ctx, query, slug)
-	err = row.Scan(&originalURL)
+	err = row.Scan(
+		&short.UUID,
+		&short.ShortURL,
+		&short.OriginalURL,
+		&short.UserID,
+		&short.Deleted,
+	)
 	if err != nil {
-		return "", err
+		return short, err
 	}
-	return originalURL, nil
+	return short, nil
 }
 
 func (r PostgresqlRepository) GetShortURL(originalURL string) (string, error) {
@@ -154,6 +168,7 @@ func (r PostgresqlRepository) BulkSave(shorts []domain.Short) error {
 			, short_url
 			, original_url
 			, user_id
+			, deleted
 		) 
 		VALUES `
 	vals := []interface{}{}
@@ -166,6 +181,7 @@ func (r PostgresqlRepository) BulkSave(shorts []domain.Short) error {
 			", $" + strconv.Itoa(counter+1) + "::TEXT" +
 			", $" + strconv.Itoa(counter+2) + "::TEXT" +
 			", $" + strconv.Itoa(counter+3) + "::UUID" +
+			", $" + strconv.Itoa(counter+4) + "::BOOLEAN" +
 			"),"
 		vals = append(
 			vals,
@@ -173,6 +189,7 @@ func (r PostgresqlRepository) BulkSave(shorts []domain.Short) error {
 			short.ShortURL,
 			short.OriginalURL,
 			short.UserID,
+			short.Deleted,
 		)
 		counter += reflect.TypeOf(domain.Short{}).NumField()
 	}
@@ -199,10 +216,11 @@ func (r PostgresqlRepository) FindByUserID(userID string) ([]domain.Short, error
 	defer cancel()
 	query := `
 		SELECT
-			id
-			, short_url
-			, original_url
-			, user_id
+			shortener.id
+			, shortener.short_url
+			, shortener.original_url
+			, shortener.user_id
+			, shortener.deleted
 		FROM
 			shortener
 		WHERE
@@ -220,10 +238,41 @@ func (r PostgresqlRepository) FindByUserID(userID string) ([]domain.Short, error
 			&short.ShortURL,
 			&short.OriginalURL,
 			&short.UserID,
+			&short.Deleted,
 		)
 		if err == nil && rows.Err() == nil {
 			shorts = append(shorts, short)
 		}
 	}
 	return shorts, nil
+}
+
+func (r PostgresqlRepository) BulkDelete(shortURLs []string, userID string) error {
+	db, err := sql.Open("pgx", r.DSN)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), r.Timeout)
+	defer cancel()
+	query := `
+		UPDATE shortener SET
+			deleted = s.deleted
+		FROM (VALUES `
+	for _, shortUUID := range shortURLs {
+		query += "(" +
+			"'" + shortUUID + "'" +
+			", true" +
+			"),"
+	}
+	query = strings.TrimSuffix(query, ",")
+	query += `
+		) AS s(short_url, deleted)
+		WHERE 
+			s.short_url = shortener.short_url
+			AND shortener.user_id = '` + userID + "'"
+	if _, err := db.ExecContext(ctx, query); err != nil {
+		return err
+	}
+	return nil
 }

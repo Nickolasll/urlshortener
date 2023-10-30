@@ -100,6 +100,7 @@ func setCookie(handlerFn http.HandlerFunc) http.HandlerFunc {
 				Name:   "authorization",
 				Value:  token,
 				MaxAge: config.TokenExp,
+				Path:   "/",
 			}
 			http.SetCookie(writer, cookie)
 		}

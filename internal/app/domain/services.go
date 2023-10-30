@@ -26,5 +26,6 @@ func Shorten(url string, userID string) Short {
 		ShortURL:    GenerateSlug(config.SlugSize),
 		OriginalURL: url,
 		UserID:      userID,
+		Deleted:     false,
 	}
 }

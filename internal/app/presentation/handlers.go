@@ -42,13 +42,20 @@ func getUserID(con context.Context) string {
 	}
 }
 
-func GetHandler(res http.ResponseWriter, req *http.Request) {
+func ExpandHandler(res http.ResponseWriter, req *http.Request) {
 	slug := req.URL.Path
-	value, _ := repository.GetOriginalURL(slug)
-	if value != "" {
-		res.Header().Add("Location", value)
-		res.WriteHeader(http.StatusTemporaryRedirect)
+	value, err := repository.GetByShortURL(slug)
+	if err != nil {
+		res.WriteHeader(http.StatusNotFound)
+		return
 	}
+	if value.Deleted {
+		res.WriteHeader(http.StatusGone)
+		return
+	}
+
+	res.Header().Add("Location", value.OriginalURL)
+	res.WriteHeader(http.StatusTemporaryRedirect)
 }
 
 func PostHandler(res http.ResponseWriter, req *http.Request) {
@@ -139,4 +146,17 @@ func FindURLs(res http.ResponseWriter, req *http.Request) {
 	resp, _ := json.Marshal(URLResults)
 	res.WriteHeader(http.StatusOK)
 	res.Write(resp)
+}
+
+func Delete(res http.ResponseWriter, req *http.Request) {
+	var shortURLs []string
+	userID := getUserID(req.Context())
+	body, _ := io.ReadAll(req.Body)
+	json.Unmarshal(body, &shortURLs)
+	for index, shortURL := range shortURLs {
+		shortURL = "/" + shortURL
+		shortURLs[index] = shortURL
+	}
+	res.WriteHeader(http.StatusAccepted)
+	go repository.BulkDelete(shortURLs, userID)
 }

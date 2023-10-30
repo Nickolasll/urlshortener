@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/Nickolasll/urlshortener/internal/app/config"
+	"github.com/Nickolasll/urlshortener/internal/app/domain"
 	"github.com/Nickolasll/urlshortener/internal/app/infrastructure/repositories"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -48,7 +49,7 @@ func Test_mainPage(t *testing.T) {
 	}
 	for _, tt := range tests {
 		repository = repositories.RAMRepository{
-			Cache: map[string]string{},
+			Cache: map[string]domain.Short{},
 		}
 		t.Run(tt.name, func(t *testing.T) {
 			bodyReader := strings.NewReader(tt.body)

@@ -73,6 +73,12 @@ func (r PostgresqlRepository) Init() error {
 }
 
 func (r PostgresqlRepository) Save(short domain.Short) error {
+	db, ctx, cancel, err := r.openConn()
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	defer cancel()
 	query := `
 		INSERT INTO shortener (
 			id
@@ -87,7 +93,15 @@ func (r PostgresqlRepository) Save(short domain.Short) error {
 			, $4::UUID
 			, $5::BOOLEAN
 		)`
-	_, err := r.execQuery(query)
+	_, err = db.ExecContext(
+		ctx,
+		query,
+		short.UUID,
+		short.ShortURL,
+		short.OriginalURL,
+		short.UserID,
+		short.Deleted,
+	)
 	return err
 }
 

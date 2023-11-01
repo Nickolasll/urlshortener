@@ -3,7 +3,6 @@ package repositories
 import (
 	"context"
 	"database/sql"
-	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -191,7 +190,7 @@ func (r PostgresqlRepository) BulkSave(shorts []domain.Short) error {
 			short.UserID,
 			short.Deleted,
 		)
-		counter += reflect.TypeOf(domain.Short{}).NumField()
+		counter += 5
 	}
 	query = strings.TrimSuffix(query, ",")
 	statement, err := db.Prepare(query)
@@ -206,7 +205,7 @@ func (r PostgresqlRepository) BulkSave(shorts []domain.Short) error {
 }
 
 func (r PostgresqlRepository) FindByUserID(userID string) ([]domain.Short, error) {
-	shorts := []domain.Short{}
+	var shorts []domain.Short
 	db, err := sql.Open("pgx", r.DSN)
 	if err != nil {
 		return nil, err

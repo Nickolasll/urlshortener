@@ -10,29 +10,6 @@ import (
 	"github.com/Nickolasll/urlshortener/internal/app/domain"
 )
 
-type Input struct {
-	URL string `json:"url"`
-}
-
-type Output struct {
-	Result string `json:"result"`
-}
-
-type BatchInput struct {
-	CorrelationID string `json:"correlation_id"`
-	OriginalURL   string `json:"original_url"`
-}
-
-type BatchOutput struct {
-	CorrelationID string `json:"correlation_id"`
-	ShortURL      string `json:"short_url"`
-}
-
-type FindURLsResult struct {
-	ShortURL    string `json:"short_url"`
-	OriginalURL string `json:"original_url"`
-}
-
 func getUserID(con context.Context) string {
 	userID := con.Value(userIDKey)
 	if userID != nil {
@@ -106,10 +83,10 @@ func PingHandler(res http.ResponseWriter, req *http.Request) {
 
 func BatchShortenHandler(res http.ResponseWriter, req *http.Request) {
 	var batchInput []BatchInput
+	var shorts []domain.Short
 	res.Header().Set("Content-Type", "application/json")
 	body, _ := io.ReadAll(req.Body)
 	json.Unmarshal(body, &batchInput)
-	shorts := []domain.Short{}
 	batchOutput := []BatchOutput{}
 	userID := getUserID(req.Context())
 	for _, batch := range batchInput {

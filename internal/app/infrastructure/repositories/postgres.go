@@ -48,6 +48,16 @@ func (r PostgresqlRepository) queryRow(query string, args ...any) (*sql.Row, err
 	return row, nil
 }
 
+func (r PostgresqlRepository) query(query string, args ...any) (*sql.Rows, error) {
+	db, ctx, cancel, err := r.openConn()
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+	defer cancel()
+	return db.QueryContext(ctx, query, args...)
+}
+
 func (r PostgresqlRepository) Ping() error {
 	db, ctx, cancel, err := r.openConn()
 	if err != nil {
@@ -197,12 +207,6 @@ func (r PostgresqlRepository) BulkSave(shorts []domain.Short) error {
 
 func (r PostgresqlRepository) FindByUserID(userID string) ([]domain.Short, error) {
 	shorts := []domain.Short{}
-	db, ctx, cancel, err := r.openConn()
-	if err != nil {
-		return nil, err
-	}
-	defer db.Close()
-	defer cancel()
 	query := `
 		SELECT
 			shortener.id
@@ -215,7 +219,7 @@ func (r PostgresqlRepository) FindByUserID(userID string) ([]domain.Short, error
 		WHERE
 			shortener.user_id = $1::UUID
 		;`
-	rows, err := db.QueryContext(ctx, query, userID)
+	rows, err := r.query(query, userID)
 	if err != nil {
 		return nil, err
 	}

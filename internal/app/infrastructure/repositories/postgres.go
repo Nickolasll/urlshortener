@@ -26,14 +26,15 @@ func (r PostgresqlRepository) openConn() (*sql.DB, context.Context, context.Canc
 	return db, ctx, cancel, err
 }
 
-func (r PostgresqlRepository) execQuery(query string, args ...any) (sql.Result, error) {
+func (r PostgresqlRepository) exec(query string, args ...any) error {
 	db, ctx, cancel, err := r.openConn()
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer db.Close()
 	defer cancel()
-	return db.ExecContext(ctx, query, args...)
+	_, err = db.ExecContext(ctx, query, args...)
+	return err
 }
 
 func (r PostgresqlRepository) Ping() error {
@@ -58,15 +59,15 @@ func (r PostgresqlRepository) Init() error {
 		, user_id uuid NOT NULL
 		, deleted boolean NOT NULL
 	)`
-	if _, err := r.execQuery(query); err != nil {
+	if err := r.exec(query); err != nil {
 		return err
 	}
 	query = "CREATE INDEX short_url_idx on shortener(short_url)"
-	if _, err := r.execQuery(query); err != nil {
+	if err := r.exec(query); err != nil {
 		return err
 	}
 	query = "CREATE INDEX user_id_idx on shortener(user_id)"
-	if _, err := r.execQuery(query); err != nil {
+	if err := r.exec(query); err != nil {
 		return err
 	}
 	return nil
@@ -87,7 +88,7 @@ func (r PostgresqlRepository) Save(short domain.Short) error {
 			, $4::UUID
 			, $5::BOOLEAN
 		)`
-	_, err := r.execQuery(
+	return r.exec(
 		query,
 		short.UUID,
 		short.ShortURL,
@@ -95,7 +96,6 @@ func (r PostgresqlRepository) Save(short domain.Short) error {
 		short.UserID,
 		short.Deleted,
 	)
-	return err
 }
 
 func (r PostgresqlRepository) GetByShortURL(slug string) (domain.Short, error) {
@@ -157,12 +157,8 @@ func (r PostgresqlRepository) GetShortURL(originalURL string) (string, error) {
 }
 
 func (r PostgresqlRepository) BulkSave(shorts []domain.Short) error {
-	db, ctx, cancel, err := r.openConn()
-	if err != nil {
-		return err
-	}
-	defer db.Close()
-	defer cancel()
+	vals := []interface{}{}
+	counter := 1
 	query := `
 		INSERT INTO shortener(
 			id
@@ -172,10 +168,6 @@ func (r PostgresqlRepository) BulkSave(shorts []domain.Short) error {
 			, deleted
 		) 
 		VALUES `
-	vals := []interface{}{}
-	counter := 1
-	// В самом pgx есть функция CopyFrom и синтаксис мне нравится больше
-	// Для единообразия все сделано через sql.Open
 	for _, short := range shorts {
 		query += "(" +
 			"$" + strconv.Itoa(counter) + "::UUID" +
@@ -195,15 +187,7 @@ func (r PostgresqlRepository) BulkSave(shorts []domain.Short) error {
 		counter += 5
 	}
 	query = strings.TrimSuffix(query, ",")
-	statement, err := db.Prepare(query)
-	if err != nil {
-		return err
-	}
-	if _, err := statement.ExecContext(ctx, vals...); err != nil {
-		return err
-	}
-
-	return nil
+	return r.exec(query, vals...)
 }
 
 func (r PostgresqlRepository) FindByUserID(userID string) ([]domain.Short, error) {
@@ -264,6 +248,5 @@ func (r PostgresqlRepository) BulkDelete(shortURLs []string, userID string) erro
 		WHERE 
 			s.short_url = shortener.short_url
 			AND shortener.user_id = '` + userID + "'"
-	_, err := r.execQuery(query)
-	return err
+	return r.exec(query)
 }

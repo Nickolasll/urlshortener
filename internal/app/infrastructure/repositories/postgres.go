@@ -33,7 +33,7 @@ func (r PostgresqlRepository) execQuery(query string, args ...any) (sql.Result, 
 	}
 	defer db.Close()
 	defer cancel()
-	return db.ExecContext(ctx, query, args)
+	return db.ExecContext(ctx, query, args...)
 }
 
 func (r PostgresqlRepository) Ping() error {

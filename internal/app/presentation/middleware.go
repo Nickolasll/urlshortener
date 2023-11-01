@@ -115,8 +115,8 @@ func setCookie(handler http.Handler) http.Handler {
 	})
 }
 
-func authorize(handler http.Handler) http.Handler {
-	return http.HandlerFunc(func(writer http.ResponseWriter, reader *http.Request) {
+func authorize(handlerFn http.HandlerFunc) http.HandlerFunc {
+	return func(writer http.ResponseWriter, reader *http.Request) {
 		cookie, err := reader.Cookie("authorization")
 		if err != nil || !auth.IsValid(cookie.Value) {
 			writer.WriteHeader(http.StatusUnauthorized)
@@ -124,6 +124,6 @@ func authorize(handler http.Handler) http.Handler {
 		}
 		UserID := auth.GetUserID(cookie.Value)
 		ctx := context.WithValue(reader.Context(), userIDKey, UserID)
-		handler.ServeHTTP(writer, reader.WithContext(ctx))
-	})
+		handlerFn.ServeHTTP(writer, reader.WithContext(ctx))
+	}
 }

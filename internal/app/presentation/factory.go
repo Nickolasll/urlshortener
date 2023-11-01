@@ -46,18 +46,17 @@ func ChiFactory() *chi.Mux {
 
 	cookieSubRouter := chi.NewRouter()
 	cookieSubRouter.Use(setCookie)
+	cookieSubRouter.Use(logging)
+	cookieSubRouter.Use(compress)
 	cookieSubRouter.Post("/", PostHandler)
 	cookieSubRouter.Post("/api/shorten", ShortenHandler)
 	cookieSubRouter.Post("/api/shorten/batch", BatchShortenHandler)
 
-	authorizeSubRouter := chi.NewRouter()
-	authorizeSubRouter.Use(authorize)
-	authorizeSubRouter.Get("/api/user/urls", FindURLs)
-	authorizeSubRouter.Delete("/api/user/urls", Delete)
-
 	router.Get("/{slug}", ExpandHandler)
 	router.Get("/ping", PingHandler)
+	router.Get("/api/user/urls", authorize(FindURLs))
+	router.Delete("/api/user/urls", authorize(Delete))
 	router.Mount("/", cookieSubRouter)
-	router.Mount("/api/user/urls", authorizeSubRouter)
+
 	return router
 }

@@ -17,13 +17,31 @@ type PostgresqlRepository struct {
 	Timeout time.Duration
 }
 
-func (r PostgresqlRepository) Ping() error {
+func (r PostgresqlRepository) openConn() (*sql.DB, context.Context, context.CancelFunc, error) {
 	db, err := sql.Open("pgx", r.DSN)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), r.Timeout)
+	return db, ctx, cancel, err
+}
+
+func (r PostgresqlRepository) execQuery(query string) (sql.Result, error) {
+	db, ctx, cancel, err := r.openConn()
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+	defer cancel()
+	return db.ExecContext(ctx, query)
+}
+
+func (r PostgresqlRepository) Ping() error {
+	db, ctx, cancel, err := r.openConn()
 	if err != nil {
 		return err
 	}
 	defer db.Close()
-	ctx, cancel := context.WithTimeout(context.Background(), r.Timeout)
 	defer cancel()
 	if err = db.PingContext(ctx); err != nil {
 		return err
@@ -32,13 +50,6 @@ func (r PostgresqlRepository) Ping() error {
 }
 
 func (r PostgresqlRepository) Init() error {
-	db, err := sql.Open("pgx", r.DSN)
-	if err != nil {
-		return err
-	}
-	defer db.Close()
-	ctx, cancel := context.WithTimeout(context.Background(), r.Timeout)
-	defer cancel()
 	query := `
 		CREATE TABLE IF NOT EXISTS shortener (
 		id uuid NOT NULL PRIMARY KEY
@@ -47,26 +58,21 @@ func (r PostgresqlRepository) Init() error {
 		, user_id uuid NOT NULL
 		, deleted boolean NOT NULL
 	)`
-	if _, err = db.ExecContext(context.Background(), query); err != nil {
+	if _, err := r.execQuery(query); err != nil {
 		return err
 	}
 	query = "CREATE INDEX short_url_idx on shortener(short_url)"
-	if _, err = db.ExecContext(ctx, query); err != nil {
+	if _, err := r.execQuery(query); err != nil {
 		return err
 	}
 	query = "CREATE INDEX user_id_idx on shortener(user_id)"
-	if _, err = db.ExecContext(ctx, query); err != nil {
+	if _, err := r.execQuery(query); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (r PostgresqlRepository) Save(short domain.Short) error {
-	db, err := sql.Open("pgx", r.DSN)
-	if err != nil {
-		return err
-	}
-	defer db.Close()
 	query := `
 		INSERT INTO shortener (
 			id
@@ -81,26 +87,17 @@ func (r PostgresqlRepository) Save(short domain.Short) error {
 			, $4::UUID
 			, $5::BOOLEAN
 		)`
-	_, err = db.ExecContext(
-		context.Background(),
-		query,
-		short.UUID,
-		short.ShortURL,
-		short.OriginalURL,
-		short.UserID,
-		short.Deleted,
-	)
+	_, err := r.execQuery(query)
 	return err
 }
 
 func (r PostgresqlRepository) GetByShortURL(slug string) (domain.Short, error) {
 	var short domain.Short
-	db, err := sql.Open("pgx", r.DSN)
+	db, ctx, cancel, err := r.openConn()
 	if err != nil {
 		return short, err
 	}
 	defer db.Close()
-	ctx, cancel := context.WithTimeout(context.Background(), r.Timeout)
 	defer cancel()
 	query := `
 		SELECT
@@ -130,12 +127,11 @@ func (r PostgresqlRepository) GetByShortURL(slug string) (domain.Short, error) {
 
 func (r PostgresqlRepository) GetShortURL(originalURL string) (string, error) {
 	var short string
-	db, err := sql.Open("pgx", r.DSN)
+	db, ctx, cancel, err := r.openConn()
 	if err != nil {
 		return "", err
 	}
 	defer db.Close()
-	ctx, cancel := context.WithTimeout(context.Background(), r.Timeout)
 	defer cancel()
 	query := `
 		SELECT
@@ -154,12 +150,11 @@ func (r PostgresqlRepository) GetShortURL(originalURL string) (string, error) {
 }
 
 func (r PostgresqlRepository) BulkSave(shorts []domain.Short) error {
-	db, err := sql.Open("pgx", r.DSN)
+	db, ctx, cancel, err := r.openConn()
 	if err != nil {
 		return err
 	}
 	defer db.Close()
-	ctx, cancel := context.WithTimeout(context.Background(), r.Timeout)
 	defer cancel()
 	query := `
 		INSERT INTO shortener(
@@ -205,13 +200,12 @@ func (r PostgresqlRepository) BulkSave(shorts []domain.Short) error {
 }
 
 func (r PostgresqlRepository) FindByUserID(userID string) ([]domain.Short, error) {
-	var shorts []domain.Short
-	db, err := sql.Open("pgx", r.DSN)
+	shorts := []domain.Short{}
+	db, ctx, cancel, err := r.openConn()
 	if err != nil {
 		return nil, err
 	}
 	defer db.Close()
-	ctx, cancel := context.WithTimeout(context.Background(), r.Timeout)
 	defer cancel()
 	query := `
 		SELECT
@@ -247,13 +241,6 @@ func (r PostgresqlRepository) FindByUserID(userID string) ([]domain.Short, error
 }
 
 func (r PostgresqlRepository) BulkDelete(shortURLs []string, userID string) error {
-	db, err := sql.Open("pgx", r.DSN)
-	if err != nil {
-		return err
-	}
-	defer db.Close()
-	ctx, cancel := context.WithTimeout(context.Background(), r.Timeout)
-	defer cancel()
 	query := `
 		UPDATE shortener SET
 			deleted = s.deleted
@@ -270,8 +257,6 @@ func (r PostgresqlRepository) BulkDelete(shortURLs []string, userID string) erro
 		WHERE 
 			s.short_url = shortener.short_url
 			AND shortener.user_id = '` + userID + "'"
-	if _, err := db.ExecContext(ctx, query); err != nil {
-		return err
-	}
-	return nil
+	_, err := r.execQuery(query)
+	return err
 }

@@ -26,14 +26,18 @@ func (r PostgresqlRepository) openConn() (*sql.DB, context.Context, context.Canc
 	return db, ctx, cancel, err
 }
 
-func (r PostgresqlRepository) execQuery(query string) (sql.Result, error) {
+func (r PostgresqlRepository) execQuery(query string, args ...any) (sql.Result, error) {
 	db, ctx, cancel, err := r.openConn()
 	if err != nil {
 		return nil, err
 	}
 	defer db.Close()
 	defer cancel()
-	return db.ExecContext(ctx, query)
+	statement, err := db.Prepare(query)
+	if err != nil {
+		return nil, err
+	}
+	return statement.ExecContext(ctx, query, args)
 }
 
 func (r PostgresqlRepository) Ping() error {
@@ -73,12 +77,6 @@ func (r PostgresqlRepository) Init() error {
 }
 
 func (r PostgresqlRepository) Save(short domain.Short) error {
-	db, ctx, cancel, err := r.openConn()
-	if err != nil {
-		return err
-	}
-	defer db.Close()
-	defer cancel()
 	query := `
 		INSERT INTO shortener (
 			id
@@ -93,8 +91,7 @@ func (r PostgresqlRepository) Save(short domain.Short) error {
 			, $4::UUID
 			, $5::BOOLEAN
 		)`
-	_, err = db.ExecContext(
-		ctx,
+	_, err := r.execQuery(
 		query,
 		short.UUID,
 		short.ShortURL,

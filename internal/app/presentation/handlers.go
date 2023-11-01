@@ -39,10 +39,6 @@ func PostHandler(res http.ResponseWriter, req *http.Request) {
 	res.Header().Set("content-type", "text/plain")
 	body, _ := io.ReadAll(req.Body)
 	userID := getUserID(req.Context())
-	if userID == "" {
-		res.WriteHeader(http.StatusUnauthorized)
-		return
-	}
 	short := domain.Shorten(string(body), userID)
 	err := repository.Save(short)
 	if err != nil {
@@ -70,10 +66,6 @@ func ShortenHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 	userID := getUserID(req.Context())
-	if userID == "" {
-		res.WriteHeader(http.StatusUnauthorized)
-		return
-	}
 	short := domain.Shorten(input.URL, userID)
 	err = repository.Save(short)
 	if err != nil {
@@ -107,10 +99,6 @@ func BatchShortenHandler(res http.ResponseWriter, req *http.Request) {
 	}
 	batchOutput := []BatchOutput{}
 	userID := getUserID(req.Context())
-	if userID == "" {
-		res.WriteHeader(http.StatusUnauthorized)
-		return
-	}
 	for _, batch := range batchInput {
 		short := domain.Shorten(batch.OriginalURL, userID)
 		shorts = append(shorts, short)
@@ -130,10 +118,6 @@ func FindURLs(res http.ResponseWriter, req *http.Request) {
 	var URLResults []FindURLsResult
 	res.Header().Set("Content-Type", "application/json")
 	userID := getUserID(req.Context())
-	if userID == "" {
-		res.WriteHeader(http.StatusUnauthorized)
-		return
-	}
 	shorts, _ := repository.FindByUserID(userID)
 	if len(shorts) == 0 {
 		res.WriteHeader(http.StatusNoContent)
@@ -154,10 +138,6 @@ func FindURLs(res http.ResponseWriter, req *http.Request) {
 func Delete(res http.ResponseWriter, req *http.Request) {
 	var shortURLs []string
 	userID := getUserID(req.Context())
-	if userID == "" {
-		res.WriteHeader(http.StatusUnauthorized)
-		return
-	}
 	body, _ := io.ReadAll(req.Body)
 	err := json.Unmarshal(body, &shortURLs)
 	if err != nil {

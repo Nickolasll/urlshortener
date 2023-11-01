@@ -95,7 +95,12 @@ func setCookie(handlerFn http.HandlerFunc) http.HandlerFunc {
 		var cookie *http.Cookie
 		cookie, err := reader.Cookie("authorization")
 		if err != nil || !auth.IsValid(cookie.Value) {
-			token, _ := auth.IssueToken()
+			token, err := auth.IssueToken()
+			if err != nil {
+				writer.WriteHeader(http.StatusInternalServerError)
+				log.Info(err)
+				return
+			}
 			cookie = &http.Cookie{
 				Name:   "authorization",
 				Value:  token,

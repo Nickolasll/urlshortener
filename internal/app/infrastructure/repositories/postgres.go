@@ -37,6 +37,17 @@ func (r PostgresqlRepository) exec(query string, args ...any) error {
 	return err
 }
 
+func (r PostgresqlRepository) queryRow(query string, args ...any) (*sql.Row, error) {
+	db, ctx, cancel, err := r.openConn()
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+	defer cancel()
+	row := db.QueryRowContext(ctx, query, args...)
+	return row, nil
+}
+
 func (r PostgresqlRepository) Ping() error {
 	db, ctx, cancel, err := r.openConn()
 	if err != nil {
@@ -100,12 +111,6 @@ func (r PostgresqlRepository) Save(short domain.Short) error {
 
 func (r PostgresqlRepository) GetByShortURL(slug string) (domain.Short, error) {
 	var short domain.Short
-	db, ctx, cancel, err := r.openConn()
-	if err != nil {
-		return short, err
-	}
-	defer db.Close()
-	defer cancel()
 	query := `
 		SELECT
 			shortener.id
@@ -118,7 +123,10 @@ func (r PostgresqlRepository) GetByShortURL(slug string) (domain.Short, error) {
 		WHERE
 			shortener.short_url = $1::TEXT
 		;`
-	row := db.QueryRowContext(ctx, query, slug)
+	row, err := r.queryRow(query, slug)
+	if err != nil {
+		return short, err
+	}
 	err = row.Scan(
 		&short.UUID,
 		&short.ShortURL,
@@ -134,12 +142,6 @@ func (r PostgresqlRepository) GetByShortURL(slug string) (domain.Short, error) {
 
 func (r PostgresqlRepository) GetShortURL(originalURL string) (string, error) {
 	var short string
-	db, ctx, cancel, err := r.openConn()
-	if err != nil {
-		return "", err
-	}
-	defer db.Close()
-	defer cancel()
 	query := `
 		SELECT
 			shortener.short_url	
@@ -148,7 +150,10 @@ func (r PostgresqlRepository) GetShortURL(originalURL string) (string, error) {
 		WHERE
 			shortener.original_url = $1::TEXT
 		;`
-	row := db.QueryRowContext(ctx, query, originalURL)
+	row, err := r.queryRow(query, originalURL)
+	if err != nil {
+		return "", err
+	}
 	err = row.Scan(&short)
 	if err != nil {
 		return "", err

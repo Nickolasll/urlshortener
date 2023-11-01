@@ -39,6 +39,10 @@ func PostHandler(res http.ResponseWriter, req *http.Request) {
 	res.Header().Set("content-type", "text/plain")
 	body, _ := io.ReadAll(req.Body)
 	userID := getUserID(req.Context())
+	if userID == "" {
+		res.WriteHeader(http.StatusUnauthorized)
+		return
+	}
 	short := domain.Shorten(string(body), userID)
 	err := repository.Save(short)
 	if err != nil {
@@ -55,14 +59,23 @@ func ShortenHandler(res http.ResponseWriter, req *http.Request) {
 	var input Input
 	res.Header().Set("Content-Type", "application/json")
 	body, _ := io.ReadAll(req.Body)
-	json.Unmarshal(body, &input)
+	err := json.Unmarshal(body, &input)
+	if err != nil {
+		res.WriteHeader(http.StatusBadRequest)
+		log.Info(err)
+		return
+	}
 	if input.URL == "" {
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	userID := getUserID(req.Context())
+	if userID == "" {
+		res.WriteHeader(http.StatusUnauthorized)
+		return
+	}
 	short := domain.Shorten(input.URL, userID)
-	err := repository.Save(short)
+	err = repository.Save(short)
 	if err != nil {
 		slug, _ := repository.GetShortURL(short.OriginalURL)
 		resp, _ := json.Marshal(Output{Result: *config.SlugEndpoint + slug})
@@ -86,9 +99,18 @@ func BatchShortenHandler(res http.ResponseWriter, req *http.Request) {
 	var shorts []domain.Short
 	res.Header().Set("Content-Type", "application/json")
 	body, _ := io.ReadAll(req.Body)
-	json.Unmarshal(body, &batchInput)
+	err := json.Unmarshal(body, &batchInput)
+	if err != nil {
+		res.WriteHeader(http.StatusBadRequest)
+		log.Info(err)
+		return
+	}
 	batchOutput := []BatchOutput{}
 	userID := getUserID(req.Context())
+	if userID == "" {
+		res.WriteHeader(http.StatusUnauthorized)
+		return
+	}
 	for _, batch := range batchInput {
 		short := domain.Shorten(batch.OriginalURL, userID)
 		shorts = append(shorts, short)
@@ -108,6 +130,10 @@ func FindURLs(res http.ResponseWriter, req *http.Request) {
 	var URLResults []FindURLsResult
 	res.Header().Set("Content-Type", "application/json")
 	userID := getUserID(req.Context())
+	if userID == "" {
+		res.WriteHeader(http.StatusUnauthorized)
+		return
+	}
 	shorts, _ := repository.FindByUserID(userID)
 	if len(shorts) == 0 {
 		res.WriteHeader(http.StatusNoContent)
@@ -128,8 +154,17 @@ func FindURLs(res http.ResponseWriter, req *http.Request) {
 func Delete(res http.ResponseWriter, req *http.Request) {
 	var shortURLs []string
 	userID := getUserID(req.Context())
+	if userID == "" {
+		res.WriteHeader(http.StatusUnauthorized)
+		return
+	}
 	body, _ := io.ReadAll(req.Body)
-	json.Unmarshal(body, &shortURLs)
+	err := json.Unmarshal(body, &shortURLs)
+	if err != nil {
+		res.WriteHeader(http.StatusBadRequest)
+		log.Info(err)
+		return
+	}
 	for index, shortURL := range shortURLs {
 		shortURL = "/" + shortURL
 		shortURLs[index] = shortURL

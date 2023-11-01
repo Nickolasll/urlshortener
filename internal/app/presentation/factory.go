@@ -45,8 +45,6 @@ func ChiFactory() *chi.Mux {
 	router.Use(compress)
 
 	cookieSubRouter := chi.NewRouter()
-	cookieSubRouter.Use(logging)
-	cookieSubRouter.Use(compress)
 	cookieSubRouter.Use(setCookie)
 	cookieSubRouter.Post("/", PostHandler)
 	cookieSubRouter.Post("/api/shorten", ShortenHandler)

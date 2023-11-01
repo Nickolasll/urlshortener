@@ -11,6 +11,8 @@ var (
 	FileStoragePath = flag.String("f", "/tmp/short-url-db.json", "File storage path")
 	DatabaseDSN     = flag.String("d", "", "Database DSN")
 	SlugSize        = 8
+	TokenExp        = 3600
+	SecretKey       = "supersecretkey"
 )
 
 func ParseFlags() {

@@ -1,18 +1,25 @@
 package presentation
 
 import (
+	"context"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/Nickolasll/urlshortener/internal/app/auth"
+	"github.com/Nickolasll/urlshortener/internal/app/config"
 	"github.com/sirupsen/logrus"
 )
+
+type key int
 
 type ResponseRecorder struct {
 	http.ResponseWriter
 	Status        int
 	ContentLength int
 }
+
+const userIDKey key = 0
 
 func (r *ResponseRecorder) Write(buf []byte) (int, error) {
 	r.ContentLength = len(buf)
@@ -24,7 +31,7 @@ func (r *ResponseRecorder) WriteHeader(status int) {
 	r.ResponseWriter.WriteHeader(status)
 }
 
-func WithLogging(handler http.Handler) http.Handler {
+func logging(handler http.Handler) http.Handler {
 	logFn := func(res http.ResponseWriter, req *http.Request) {
 
 		recorder := &ResponseRecorder{
@@ -55,7 +62,7 @@ func WithLogging(handler http.Handler) http.Handler {
 	return http.HandlerFunc(logFn)
 }
 
-func gzipMiddleware(handler http.Handler) http.Handler {
+func compress(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, reader *http.Request) {
 		originalWriter := writer
 
@@ -81,4 +88,42 @@ func gzipMiddleware(handler http.Handler) http.Handler {
 
 		handler.ServeHTTP(originalWriter, reader)
 	})
+}
+
+func setCookie(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(writer http.ResponseWriter, reader *http.Request) {
+		var cookie *http.Cookie
+		cookie, err := reader.Cookie("authorization")
+		if err != nil || !auth.IsValid(cookie.Value) {
+			token, err := auth.IssueToken()
+			if err != nil {
+				writer.WriteHeader(http.StatusInternalServerError)
+				log.Info(err)
+				return
+			}
+			cookie = &http.Cookie{
+				Name:   "authorization",
+				Value:  token,
+				MaxAge: config.TokenExp,
+				Path:   "/",
+			}
+			http.SetCookie(writer, cookie)
+		}
+		UserID := auth.GetUserID(cookie.Value)
+		ctx := context.WithValue(reader.Context(), userIDKey, UserID)
+		handler.ServeHTTP(writer, reader.WithContext(ctx))
+	})
+}
+
+func authorize(handlerFn http.HandlerFunc) http.HandlerFunc {
+	return func(writer http.ResponseWriter, reader *http.Request) {
+		cookie, err := reader.Cookie("authorization")
+		if err != nil || !auth.IsValid(cookie.Value) {
+			writer.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		UserID := auth.GetUserID(cookie.Value)
+		ctx := context.WithValue(reader.Context(), userIDKey, UserID)
+		handlerFn.ServeHTTP(writer, reader.WithContext(ctx))
+	}
 }

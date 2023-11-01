@@ -1,6 +1,7 @@
 package presentation
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -9,40 +10,38 @@ import (
 	"github.com/Nickolasll/urlshortener/internal/app/domain"
 )
 
-type Input struct {
-	URL string `json:"url"`
-}
-
-type Output struct {
-	Result string `json:"result"`
-}
-
-type BatchInput struct {
-	CorrelationID string `json:"correlation_id"`
-	OriginalURL   string `json:"original_url"`
-}
-
-type BatchOutput struct {
-	CorrelationID string `json:"correlation_id"`
-	ShortURL      string `json:"short_url"`
-}
-
-func GetHandler(res http.ResponseWriter, req *http.Request) {
-	slug := req.URL.Path
-	value, _ := repository.GetOriginalURL(slug)
-	if value != "" {
-		res.Header().Add("Location", value)
-		res.WriteHeader(http.StatusTemporaryRedirect)
+func getUserID(con context.Context) string {
+	userID := con.Value(userIDKey)
+	if userID != nil {
+		return userID.(string)
+	} else {
+		return ""
 	}
+}
+
+func ExpandHandler(res http.ResponseWriter, req *http.Request) {
+	slug := req.URL.Path
+	value, err := repository.GetByShortURL(slug)
+	if err != nil {
+		res.WriteHeader(http.StatusNotFound)
+		return
+	}
+	if value.Deleted {
+		res.WriteHeader(http.StatusGone)
+		return
+	}
+
+	res.Header().Add("Location", value.OriginalURL)
+	res.WriteHeader(http.StatusTemporaryRedirect)
 }
 
 func PostHandler(res http.ResponseWriter, req *http.Request) {
 	res.Header().Set("content-type", "text/plain")
 	body, _ := io.ReadAll(req.Body)
-	short := domain.Shorten(string(body))
+	userID := getUserID(req.Context())
+	short := domain.Shorten(string(body), userID)
 	err := repository.Save(short)
 	if err != nil {
-
 		slug, _ := repository.GetShortURL(short.OriginalURL)
 		res.WriteHeader(http.StatusConflict)
 		res.Write([]byte(*config.SlugEndpoint + slug))
@@ -56,13 +55,19 @@ func ShortenHandler(res http.ResponseWriter, req *http.Request) {
 	var input Input
 	res.Header().Set("Content-Type", "application/json")
 	body, _ := io.ReadAll(req.Body)
-	json.Unmarshal(body, &input)
+	err := json.Unmarshal(body, &input)
+	if err != nil {
+		res.WriteHeader(http.StatusBadRequest)
+		log.Info(err)
+		return
+	}
 	if input.URL == "" {
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	short := domain.Shorten(input.URL)
-	err := repository.Save(short)
+	userID := getUserID(req.Context())
+	short := domain.Shorten(input.URL, userID)
+	err = repository.Save(short)
 	if err != nil {
 		slug, _ := repository.GetShortURL(short.OriginalURL)
 		resp, _ := json.Marshal(Output{Result: *config.SlugEndpoint + slug})
@@ -83,13 +88,19 @@ func PingHandler(res http.ResponseWriter, req *http.Request) {
 
 func BatchShortenHandler(res http.ResponseWriter, req *http.Request) {
 	var batchInput []BatchInput
+	var shorts []domain.Short
 	res.Header().Set("Content-Type", "application/json")
 	body, _ := io.ReadAll(req.Body)
-	json.Unmarshal(body, &batchInput)
-	shorts := []domain.Short{}
+	err := json.Unmarshal(body, &batchInput)
+	if err != nil {
+		res.WriteHeader(http.StatusBadRequest)
+		log.Info(err)
+		return
+	}
 	batchOutput := []BatchOutput{}
+	userID := getUserID(req.Context())
 	for _, batch := range batchInput {
-		short := domain.Shorten(batch.OriginalURL)
+		short := domain.Shorten(batch.OriginalURL, userID)
 		shorts = append(shorts, short)
 		output := BatchOutput{
 			CorrelationID: batch.CorrelationID,
@@ -101,4 +112,43 @@ func BatchShortenHandler(res http.ResponseWriter, req *http.Request) {
 	resp, _ := json.Marshal(batchOutput)
 	res.WriteHeader(http.StatusCreated)
 	res.Write(resp)
+}
+
+func FindURLs(res http.ResponseWriter, req *http.Request) {
+	var URLResults []FindURLsResult
+	res.Header().Set("Content-Type", "application/json")
+	userID := getUserID(req.Context())
+	shorts, _ := repository.FindByUserID(userID)
+	if len(shorts) == 0 {
+		res.WriteHeader(http.StatusNoContent)
+		return
+	}
+	for _, short := range shorts {
+		result := FindURLsResult{
+			ShortURL:    *config.SlugEndpoint + short.ShortURL,
+			OriginalURL: short.OriginalURL,
+		}
+		URLResults = append(URLResults, result)
+	}
+	resp, _ := json.Marshal(URLResults)
+	res.WriteHeader(http.StatusOK)
+	res.Write(resp)
+}
+
+func Delete(res http.ResponseWriter, req *http.Request) {
+	var shortURLs []string
+	userID := getUserID(req.Context())
+	body, _ := io.ReadAll(req.Body)
+	err := json.Unmarshal(body, &shortURLs)
+	if err != nil {
+		res.WriteHeader(http.StatusBadRequest)
+		log.Info(err)
+		return
+	}
+	for index, shortURL := range shortURLs {
+		shortURL = "/" + shortURL
+		shortURLs[index] = shortURL
+	}
+	res.WriteHeader(http.StatusAccepted)
+	go repository.BulkDelete(shortURLs, userID)
 }

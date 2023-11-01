@@ -31,11 +31,11 @@ func TestRAMRepository(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			repository := RAMRepository{
-				Cache: map[string]string{},
+				Cache: map[string]domain.Short{},
 			}
 			repository.Save(tt.args.short)
-			got, _ := repository.GetOriginalURL(tt.args.short.ShortURL)
-			assert.Equal(t, got, tt.want)
+			got, _ := repository.GetByShortURL(tt.args.short.ShortURL)
+			assert.Equal(t, got.OriginalURL, tt.want)
 		})
 	}
 }

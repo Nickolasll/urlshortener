@@ -5,17 +5,17 @@ import (
 )
 
 type RAMRepository struct {
-	Cache map[string]string
+	Cache map[string]domain.Short
 }
 
 func (r RAMRepository) Save(short domain.Short) error {
-	r.Cache[short.ShortURL] = short.OriginalURL
+	r.Cache[short.ShortURL] = short
 	return nil
 }
 
-func (r RAMRepository) GetOriginalURL(slug string) (string, error) {
-	value := r.Cache[slug]
-	return value, nil
+func (r RAMRepository) GetByShortURL(shortURL string) (domain.Short, error) {
+	short := r.Cache[shortURL]
+	return short, nil
 }
 
 func (r RAMRepository) Ping() error {
@@ -30,6 +30,34 @@ func (r RAMRepository) BulkSave(shorts []domain.Short) error {
 }
 
 func (r RAMRepository) GetShortURL(originalURL string) (string, error) {
-	key, _ := mapkey(r.Cache, originalURL)
+	key, _ := originalURLKeyMap(r.Cache, originalURL)
 	return key, nil
+}
+
+func (r RAMRepository) FindByUserID(userID string) ([]domain.Short, error) {
+	shorts := []domain.Short{}
+	for _, short := range r.Cache {
+		if short.UserID == userID {
+			shorts = append(shorts, short)
+		}
+	}
+	return shorts, nil
+}
+
+func contains(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
+}
+
+func (r RAMRepository) BulkDelete(shortURLs []string, userID string) error {
+	for key, short := range r.Cache {
+		if contains(shortURLs, short.ShortURL) && short.UserID == userID {
+			delete(r.Cache, key)
+		}
+	}
+	return nil
 }

@@ -10,7 +10,7 @@ import (
 
 type FileRepository struct {
 	FilePath string
-	Cache    map[string]string
+	Cache    map[string]domain.Short
 }
 
 func (r FileRepository) loadCache() error {
@@ -23,13 +23,13 @@ func (r FileRepository) loadCache() error {
 	for scanner.Scan() {
 		var short domain.Short
 		json.Unmarshal(scanner.Bytes(), &short)
-		r.Cache[short.ShortURL] = short.OriginalURL
+		r.Cache[short.ShortURL] = short
 	}
 	return nil
 }
 
 func (r FileRepository) cache(short domain.Short) {
-	r.Cache[short.ShortURL] = short.OriginalURL
+	r.Cache[short.ShortURL] = short
 }
 
 func (r FileRepository) Save(short domain.Short) error {
@@ -48,14 +48,14 @@ func (r FileRepository) Save(short domain.Short) error {
 	return nil
 }
 
-func (r FileRepository) GetOriginalURL(slug string) (string, error) {
-	value, ok := r.Cache[slug]
+func (r FileRepository) GetByShortURL(shortURL string) (domain.Short, error) {
+	short, ok := r.Cache[shortURL]
 	if !ok {
 		r.loadCache()
-		value := r.Cache[slug]
-		return value, nil
+		short := r.Cache[shortURL]
+		return short, nil
 	}
-	return value, nil
+	return short, nil
 }
 
 func (r FileRepository) Ping() error {
@@ -84,10 +84,44 @@ func (r FileRepository) BulkSave(shorts []domain.Short) error {
 }
 
 func (r FileRepository) GetShortURL(originalURL string) (string, error) {
-	key, ok := mapkey(r.Cache, originalURL)
+	key, ok := originalURLKeyMap(r.Cache, originalURL)
 	if !ok {
 		r.loadCache()
-		key, _ = mapkey(r.Cache, originalURL)
+		key, _ = originalURLKeyMap(r.Cache, originalURL)
 	}
 	return key, nil
+}
+
+func (r FileRepository) FindByUserID(userID string) ([]domain.Short, error) {
+	shorts := []domain.Short{}
+	for _, short := range r.Cache {
+		if short.UserID == userID {
+			shorts = append(shorts, short)
+		}
+	}
+	return shorts, nil
+}
+
+func (r FileRepository) BulkDelete(shortURLs []string, userID string) error {
+	for key, short := range r.Cache {
+		if contains(shortURLs, short.ShortURL) && short.UserID == userID {
+			short.Deleted = true
+			r.Cache[key] = short
+		}
+	}
+	file, err := os.OpenFile(r.FilePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0755)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	data := []byte{}
+	for _, short := range r.Cache {
+		serialized, err := json.Marshal(short)
+		if err != nil {
+			return err
+		}
+		data = append(data, append(serialized, '\n')...)
+	}
+	file.Write(data)
+	return nil
 }

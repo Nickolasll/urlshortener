@@ -45,7 +45,8 @@ func Test_ShortenHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			repository = repositories.RAMRepository{
-				Cache: map[string]domain.Short{},
+				OriginalToShorts: map[string]domain.Short{},
+				Cache:            map[string]string{},
 			}
 			bodyReader := bytes.NewReader(tt.body)
 			request := httptest.NewRequest(http.MethodPost, "/api/shorten", bodyReader)

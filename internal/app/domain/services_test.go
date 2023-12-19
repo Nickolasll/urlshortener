@@ -3,6 +3,7 @@ package domain
 import (
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -35,5 +36,13 @@ func TestGenerateSlug(t *testing.T) {
 			got := GenerateSlug(tt.args.size)
 			assert.Equal(t, len(got), tt.want)
 		})
+	}
+}
+
+func BenchmarkShorteng(b *testing.B) {
+	URL := "www.testlongurl.com"
+	userID := uuid.New().String()
+	for i := 0; i < b.N; i++ {
+		Shorten(URL, userID)
 	}
 }

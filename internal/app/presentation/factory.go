@@ -8,6 +8,7 @@ import (
 	"github.com/Nickolasll/urlshortener/internal/app/domain"
 	"github.com/Nickolasll/urlshortener/internal/app/infrastructure/repositories"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/sirupsen/logrus"
 )
 
@@ -26,7 +27,8 @@ func initRepository() domain.ShortRepositoryInerface {
 		}
 	} else {
 		return repositories.RAMRepository{
-			Cache: map[string]domain.Short{},
+			OriginalToShorts: map[string]domain.Short{},
+			Cache:            map[string]string{},
 		}
 	}
 }
@@ -42,7 +44,7 @@ func ChiFactory() *chi.Mux {
 	repository = initRepository()
 	router := chi.NewRouter()
 	router.Use(logging)
-	router.Use(compress)
+	// router.Use(compress)
 
 	cookieSubRouter := chi.NewRouter()
 	cookieSubRouter.Use(setCookie)
@@ -55,6 +57,7 @@ func ChiFactory() *chi.Mux {
 	router.Get("/api/user/urls", authorize(FindURLs))
 	router.Delete("/api/user/urls", authorize(Delete))
 	router.Mount("/", cookieSubRouter)
+	router.Mount("/debug", middleware.Profiler())
 
 	return router
 }

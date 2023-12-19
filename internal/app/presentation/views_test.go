@@ -49,7 +49,8 @@ func Test_mainPage(t *testing.T) {
 	}
 	for _, tt := range tests {
 		repository = repositories.RAMRepository{
-			Cache: map[string]domain.Short{},
+			OriginalToShorts: map[string]domain.Short{},
+			Cache:            map[string]string{},
 		}
 		t.Run(tt.name, func(t *testing.T) {
 			bodyReader := strings.NewReader(tt.body)

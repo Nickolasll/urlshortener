@@ -44,7 +44,7 @@ func ChiFactory() *chi.Mux {
 	repository = initRepository()
 	router := chi.NewRouter()
 	router.Use(logging)
-	// router.Use(compress)
+	router.Use(compress)
 
 	cookieSubRouter := chi.NewRouter()
 	cookieSubRouter.Use(setCookie)

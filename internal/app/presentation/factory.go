@@ -13,9 +13,9 @@ import (
 )
 
 var log = logrus.New()
-var repository domain.ShortRepositoryInerface
+var repository domain.IShortRepository
 
-func initRepository() domain.ShortRepositoryInerface {
+func initRepository() domain.IShortRepository {
 	if *config.DatabaseDSN != "" {
 		postgres := repositories.PostgresqlRepository{DSN: *config.DatabaseDSN, Timeout: 10 * time.Second}
 		postgres.Init()

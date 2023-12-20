@@ -1,6 +1,6 @@
 package domain
 
-type ShortRepositoryInerface interface {
+type IShortRepository interface {
 	Save(short Short) error
 	GetByShortURL(shortURL string) (Short, error)
 	Ping() error

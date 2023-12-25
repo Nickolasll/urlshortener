@@ -27,7 +27,7 @@ func Shorten(url string, userID string) Short {
 		UUID:        uuid.New().String(),
 		ShortURL:    generateSlug(config.SlugSize),
 		OriginalURL: url,
-		UserID:      "4a7878fb-d657-40d9-a6e2-6c4f167ca0ce",
+		UserID:      userID,
 		Deleted:     false,
 	}
 }

@@ -8,9 +8,12 @@ import (
 	"github.com/Nickolasll/urlshortener/internal/app/domain"
 )
 
+// Имплементация файлового репозитория
 type FileRepository struct {
+	// FilePath - путь до файла
 	FilePath string
-	Cache    map[string]domain.Short
+	// Cache - Кэш
+	Cache map[string]domain.Short
 }
 
 func (r FileRepository) loadCache() error {
@@ -124,4 +127,15 @@ func (r FileRepository) BulkDelete(shortURLs []string, userID string) error {
 	}
 	file.Write(data)
 	return nil
+}
+
+func originalURLKeyMap(m map[string]domain.Short, value string) (key string, ok bool) {
+	for k, v := range m {
+		if v.OriginalURL == value {
+			key = k
+			ok = true
+			return
+		}
+	}
+	return
 }

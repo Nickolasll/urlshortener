@@ -4,7 +4,10 @@ import (
 	"github.com/Nickolasll/urlshortener/internal/app/domain"
 )
 
+// Имплементация репозитория в оперативной памяти
 type RAMRepository struct {
+	// OriginalToShorts - маппинг оригинальной ссылки к объекту сокращенной ссылки
+	// Cache - маппинг сокращенной ссылки к оригинальной ссылке
 	OriginalToShorts map[string]domain.Short
 	Cache            map[string]string
 }

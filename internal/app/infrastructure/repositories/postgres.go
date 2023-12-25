@@ -12,8 +12,11 @@ import (
 	"github.com/Nickolasll/urlshortener/internal/app/domain"
 )
 
+// Имплементация postgres репозитория
 type PostgresqlRepository struct {
-	DSN     string
+	// DSN - имя источника данных
+	DSN string
+	// Timeout - время ожидания операции
 	Timeout time.Duration
 }
 

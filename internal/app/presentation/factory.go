@@ -33,6 +33,7 @@ func initRepository() domain.IShortRepository {
 	}
 }
 
+// Фабрика приложения с использованием роутера mux
 func MuxFactory() *http.ServeMux {
 	repository = initRepository()
 	mux := http.NewServeMux()
@@ -40,6 +41,7 @@ func MuxFactory() *http.ServeMux {
 	return mux
 }
 
+// Фабрика приложения с использованием роутера chi
 func ChiFactory() *chi.Mux {
 	repository = initRepository()
 	router := chi.NewRouter()
@@ -48,14 +50,14 @@ func ChiFactory() *chi.Mux {
 
 	cookieSubRouter := chi.NewRouter()
 	cookieSubRouter.Use(setCookie)
-	cookieSubRouter.Post("/", PostHandler)
-	cookieSubRouter.Post("/api/shorten", ShortenHandler)
-	cookieSubRouter.Post("/api/shorten/batch", BatchShortenHandler)
+	cookieSubRouter.Post("/", postHandler)
+	cookieSubRouter.Post("/api/shorten", shortenHandler)
+	cookieSubRouter.Post("/api/shorten/batch", batchShortenHandler)
 
-	router.Get("/{slug}", ExpandHandler)
-	router.Get("/ping", PingHandler)
-	router.Get("/api/user/urls", authorize(FindURLs))
-	router.Delete("/api/user/urls", authorize(Delete))
+	router.Get("/{slug}", expandHandler)
+	router.Get("/ping", pingHandler)
+	router.Get("/api/user/urls", authorize(findURLs))
+	router.Delete("/api/user/urls", authorize(delete))
 	router.Mount("/", cookieSubRouter)
 	router.Mount("/debug", middleware.Profiler())
 

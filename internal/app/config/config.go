@@ -6,15 +6,23 @@ import (
 )
 
 var (
-	ServerEndpoint  = flag.String("a", "localhost:8080", "Server endpoint")
-	SlugEndpoint    = flag.String("b", "http://localhost:8080", "Shorten endpoint")
+	// ServerEndpoint - адрес сокращателя ссылок
+	ServerEndpoint = flag.String("a", "localhost:8080", "Server endpoint")
+	// SlugEndpoint - адрес для получения полной ссылки по сокращенной
+	SlugEndpoint = flag.String("b", "http://localhost:8080", "Shorten endpoint")
+	// FileStoragePath - путь до репозитория-файла
 	FileStoragePath = flag.String("f", "/tmp/short-url-db.json", "File storage path")
-	DatabaseDSN     = flag.String("d", "", "Database DSN")
-	SlugSize        = 8
-	TokenExp        = 3600
-	SecretKey       = "supersecretkey"
+	// DatabaseDSN - источник данных для подключения к postgres
+	DatabaseDSN = flag.String("d", "", "Database DSN")
+	// SlugSize - Размер сокращенной ссылки
+	SlugSize = 8
+	// TokenExp - Время жизни токена в секундах
+	TokenExp = 3600
+	// SecretKey - Ключ шифрования токена
+	SecretKey = "supersecretkey"
 )
 
+// Инициализирует конфигурацию сервиса, читая флаги и переменные окрудения
 func ParseFlags() {
 	flag.Parse()
 

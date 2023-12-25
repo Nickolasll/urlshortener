@@ -11,7 +11,8 @@ import (
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-func GenerateSlug(size int) string {
+// Генерирует случайный набор символов длиной size
+func generateSlug(size int) string {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	result := make([]byte, size)
 	for i := range result {
@@ -20,12 +21,13 @@ func GenerateSlug(size int) string {
 	return "/" + string(result)
 }
 
+// Создает сокращенную ссылку
 func Shorten(url string, userID string) Short {
 	return Short{
 		UUID:        uuid.New().String(),
-		ShortURL:    GenerateSlug(config.SlugSize),
+		ShortURL:    generateSlug(config.SlugSize),
 		OriginalURL: url,
-		UserID:      userID,
+		UserID:      "4a7878fb-d657-40d9-a6e2-6c4f167ca0ce",
 		Deleted:     false,
 	}
 }

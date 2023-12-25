@@ -51,7 +51,7 @@ func Test_ShortenHandler(t *testing.T) {
 			bodyReader := bytes.NewReader(tt.body)
 			request := httptest.NewRequest(http.MethodPost, "/api/shorten", bodyReader)
 			recorder := httptest.NewRecorder()
-			ShortenHandler(recorder, request)
+			shortenHandler(recorder, request)
 
 			result := recorder.Result()
 

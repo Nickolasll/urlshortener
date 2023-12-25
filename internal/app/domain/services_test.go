@@ -33,7 +33,7 @@ func TestGenerateSlug(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := GenerateSlug(tt.args.size)
+			got := generateSlug(tt.args.size)
 			assert.Equal(t, len(got), tt.want)
 		})
 	}

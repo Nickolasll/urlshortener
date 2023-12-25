@@ -12,22 +12,26 @@ type RAMRepository struct {
 	Cache            map[string]string
 }
 
+// Сохранить сокращенную ссылку
 func (r RAMRepository) Save(short domain.Short) error {
 	r.OriginalToShorts[short.OriginalURL] = short
 	r.Cache[short.ShortURL] = short.OriginalURL
 	return nil
 }
 
+// Получить объект сокращенной ссылки по значению
 func (r RAMRepository) GetByShortURL(shortURL string) (domain.Short, error) {
 	originalURL := r.Cache[shortURL]
 	short := r.OriginalToShorts[originalURL]
 	return short, nil
 }
 
+// Проверка работоспособности
 func (r RAMRepository) Ping() error {
 	return nil
 }
 
+// Сохранить пачку сокращенных ссылок
 func (r RAMRepository) BulkSave(shorts []domain.Short) error {
 	for _, short := range shorts {
 		r.Save(short)
@@ -35,11 +39,13 @@ func (r RAMRepository) BulkSave(shorts []domain.Short) error {
 	return nil
 }
 
+// Получить сокращенную ссылку по несокращенному значению
 func (r RAMRepository) GetShortURL(originalURL string) (string, error) {
 	short := r.OriginalToShorts[originalURL]
 	return short.OriginalURL, nil
 }
 
+// Получить список сокращенных ссылок по идентификатору пользователя
 func (r RAMRepository) FindByUserID(userID string) ([]domain.Short, error) {
 	shorts := []domain.Short{}
 	for _, short := range r.OriginalToShorts {
@@ -59,6 +65,7 @@ func contains(s []string, e string) bool {
 	return false
 }
 
+// Удалить пачку сокращенных ссылок
 func (r RAMRepository) BulkDelete(shortURLs []string, userID string) error {
 	for key, short := range r.OriginalToShorts {
 		if contains(shortURLs, short.ShortURL) && short.UserID == userID {

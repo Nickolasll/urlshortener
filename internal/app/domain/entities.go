@@ -1,5 +1,6 @@
 package domain
 
+// Сокращенная ссылка
 type Short struct {
 	// UUID - Уникальный идентификатор сокращенной ссылки
 	UUID string `json:"uuid"`

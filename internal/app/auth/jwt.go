@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// Идентификация пользоватедя
 type Claims struct {
 	jwt.RegisteredClaims
 	UserID string

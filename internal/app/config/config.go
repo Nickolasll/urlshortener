@@ -5,6 +5,7 @@ import (
 	"os"
 )
 
+// Переменные конфигурации для сервиса
 var (
 	// ServerEndpoint - адрес сокращателя ссылок
 	ServerEndpoint = flag.String("a", "localhost:8080", "Server endpoint")

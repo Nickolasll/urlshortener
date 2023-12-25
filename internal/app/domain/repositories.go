@@ -1,5 +1,6 @@
 package domain
 
+// Интерфейс репозитория
 type IShortRepository interface {
 	// Save - Сохранить сокращенную ссылку
 	Save(short Short) error

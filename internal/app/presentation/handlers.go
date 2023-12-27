@@ -19,7 +19,7 @@ func getUserID(con context.Context) string {
 	}
 }
 
-func ExpandHandler(res http.ResponseWriter, req *http.Request) {
+func expandHandler(res http.ResponseWriter, req *http.Request) {
 	slug := req.URL.Path
 	value, err := repository.GetByShortURL(slug)
 	if err != nil {
@@ -35,7 +35,7 @@ func ExpandHandler(res http.ResponseWriter, req *http.Request) {
 	res.WriteHeader(http.StatusTemporaryRedirect)
 }
 
-func PostHandler(res http.ResponseWriter, req *http.Request) {
+func postHandler(res http.ResponseWriter, req *http.Request) {
 	res.Header().Set("content-type", "text/plain")
 	body, _ := io.ReadAll(req.Body)
 	userID := getUserID(req.Context())
@@ -51,7 +51,7 @@ func PostHandler(res http.ResponseWriter, req *http.Request) {
 	res.Write([]byte(*config.SlugEndpoint + short.ShortURL))
 }
 
-func ShortenHandler(res http.ResponseWriter, req *http.Request) {
+func shortenHandler(res http.ResponseWriter, req *http.Request) {
 	var input Input
 	res.Header().Set("Content-Type", "application/json")
 	body, _ := io.ReadAll(req.Body)
@@ -80,13 +80,13 @@ func ShortenHandler(res http.ResponseWriter, req *http.Request) {
 	res.Write(resp)
 }
 
-func PingHandler(res http.ResponseWriter, req *http.Request) {
+func pingHandler(res http.ResponseWriter, req *http.Request) {
 	if repository.Ping() != nil {
 		res.WriteHeader(http.StatusInternalServerError)
 	}
 }
 
-func BatchShortenHandler(res http.ResponseWriter, req *http.Request) {
+func batchShortenHandler(res http.ResponseWriter, req *http.Request) {
 	var batchInput []BatchInput
 	var shorts []domain.Short
 	res.Header().Set("Content-Type", "application/json")
@@ -114,7 +114,7 @@ func BatchShortenHandler(res http.ResponseWriter, req *http.Request) {
 	res.Write(resp)
 }
 
-func FindURLs(res http.ResponseWriter, req *http.Request) {
+func findURLs(res http.ResponseWriter, req *http.Request) {
 	var URLResults []FindURLsResult
 	res.Header().Set("Content-Type", "application/json")
 	userID := getUserID(req.Context())
@@ -135,7 +135,7 @@ func FindURLs(res http.ResponseWriter, req *http.Request) {
 	res.Write(resp)
 }
 
-func Delete(res http.ResponseWriter, req *http.Request) {
+func delete(res http.ResponseWriter, req *http.Request) {
 	var shortURLs []string
 	userID := getUserID(req.Context())
 	body, _ := io.ReadAll(req.Body)

@@ -13,6 +13,7 @@ import (
 
 type key int
 
+// ResponseRecorder - Рекордер для логгирования
 type ResponseRecorder struct {
 	http.ResponseWriter
 	Status        int
@@ -21,11 +22,13 @@ type ResponseRecorder struct {
 
 const userIDKey key = 0
 
+// Write - Запись результатов обработки запроса с подсчетам длины контента
 func (r *ResponseRecorder) Write(buf []byte) (int, error) {
 	r.ContentLength = len(buf)
 	return r.ResponseWriter.Write(buf)
 }
 
+// WriteHeader - Запись статуса обработки запроса
 func (r *ResponseRecorder) WriteHeader(status int) {
 	r.Status = status
 	r.ResponseWriter.WriteHeader(status)

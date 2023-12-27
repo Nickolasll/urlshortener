@@ -12,7 +12,7 @@ import (
 	"github.com/Nickolasll/urlshortener/internal/app/domain"
 )
 
-// Имплементация postgres репозитория
+// PostgresqlRepository - Имплементация postgres репозитория
 type PostgresqlRepository struct {
 	// DSN - имя источника данных
 	DSN string
@@ -29,7 +29,7 @@ func (r PostgresqlRepository) openConn() (*sql.DB, context.Context, context.Canc
 	return db, ctx, cancel, err
 }
 
-// Проверка работоспособности
+// Ping - Проверка работоспособности
 func (r PostgresqlRepository) Ping() error {
 	db, ctx, cancel, err := r.openConn()
 	if err != nil {
@@ -43,7 +43,7 @@ func (r PostgresqlRepository) Ping() error {
 	return nil
 }
 
-// Инициализация репозитория
+// Init - Инициализация репозитория
 func (r PostgresqlRepository) Init() error {
 	db, ctx, cancel, err := r.openConn()
 	if err != nil {
@@ -73,7 +73,7 @@ func (r PostgresqlRepository) Init() error {
 	return nil
 }
 
-// Сохранить сокращенную ссылку
+// Save - Сохранить сокращенную ссылку
 func (r PostgresqlRepository) Save(short domain.Short) error {
 	db, ctx, cancel, err := r.openConn()
 	if err != nil {
@@ -107,7 +107,7 @@ func (r PostgresqlRepository) Save(short domain.Short) error {
 	return err
 }
 
-// Получить объект сокращенной ссылки по значению
+// GetByShortURL - Получить объект сокращенной ссылки по значению
 func (r PostgresqlRepository) GetByShortURL(slug string) (domain.Short, error) {
 	var short domain.Short
 	db, ctx, cancel, err := r.openConn()
@@ -142,7 +142,7 @@ func (r PostgresqlRepository) GetByShortURL(slug string) (domain.Short, error) {
 	return short, nil
 }
 
-// Получить сокращенную ссылку по несокращенному значению
+// GetShortURL - Получить сокращенную ссылку по несокращенному значению
 func (r PostgresqlRepository) GetShortURL(originalURL string) (string, error) {
 	var short string
 	db, ctx, cancel, err := r.openConn()
@@ -167,7 +167,7 @@ func (r PostgresqlRepository) GetShortURL(originalURL string) (string, error) {
 	return short, nil
 }
 
-// Сохранить пачку сокращенных ссылок
+// BulkSave - Сохранить пачку сокращенных ссылок
 func (r PostgresqlRepository) BulkSave(shorts []domain.Short) error {
 	db, ctx, cancel, err := r.openConn()
 	if err != nil {
@@ -209,7 +209,7 @@ func (r PostgresqlRepository) BulkSave(shorts []domain.Short) error {
 	return err
 }
 
-// Получить список сокращенных ссылок по идентификатору пользователя
+// FindByUserID - Получить список сокращенных ссылок по идентификатору пользователя
 func (r PostgresqlRepository) FindByUserID(userID string) ([]domain.Short, error) {
 	shorts := []domain.Short{}
 	db, ctx, cancel, err := r.openConn()
@@ -252,7 +252,7 @@ func (r PostgresqlRepository) FindByUserID(userID string) ([]domain.Short, error
 	return shorts, nil
 }
 
-// Удалить пачку сокращенных ссылок
+// BulkDelete - Удалить пачку сокращенных ссылок
 func (r PostgresqlRepository) BulkDelete(shortURLs []string, userID string) error {
 	db, ctx, cancel, err := r.openConn()
 	if err != nil {

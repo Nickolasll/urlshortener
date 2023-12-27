@@ -9,13 +9,13 @@ import (
 	"github.com/google/uuid"
 )
 
-// Идентификация пользоватедя
+// Claims - идентификация пользователя
 type Claims struct {
 	jwt.RegisteredClaims
 	UserID string
 }
 
-// Выпускает новый токен для пользователя
+// IssueToken - Выпускает новый токен для пользователя
 func IssueToken() (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -32,7 +32,7 @@ func IssueToken() (string, error) {
 	return tokenString, nil
 }
 
-// Проверяет валидность токена
+// IsValid - Проверяет валидность токена
 func IsValid(tokenString string) bool {
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(
@@ -52,7 +52,7 @@ func IsValid(tokenString string) bool {
 	return true
 }
 
-// Получает идентификатор пользователя из токена
+// GetUserID - Получает идентификатор пользователя из токена
 func GetUserID(tokenString string) string {
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(

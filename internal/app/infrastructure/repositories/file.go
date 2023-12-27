@@ -8,7 +8,7 @@ import (
 	"github.com/Nickolasll/urlshortener/internal/app/domain"
 )
 
-// Имплементация файлового репозитория
+// FileRepository - Имплементация файлового репозитория
 type FileRepository struct {
 	// FilePath - путь до файла
 	FilePath string
@@ -35,7 +35,7 @@ func (r FileRepository) cache(short domain.Short) {
 	r.Cache[short.ShortURL] = short
 }
 
-// Сохранить сокращенную ссылку
+// Save - Сохранить сокращенную ссылку
 func (r FileRepository) Save(short domain.Short) error {
 	file, err := os.OpenFile(r.FilePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
@@ -52,7 +52,7 @@ func (r FileRepository) Save(short domain.Short) error {
 	return nil
 }
 
-// Получить объект сокращенной ссылки по значению
+// GetByShortURL - Получить объект сокращенной ссылки по значению
 func (r FileRepository) GetByShortURL(shortURL string) (domain.Short, error) {
 	short, ok := r.Cache[shortURL]
 	if !ok {
@@ -63,12 +63,12 @@ func (r FileRepository) GetByShortURL(shortURL string) (domain.Short, error) {
 	return short, nil
 }
 
-// Проверка работоспособности
+// Ping - Проверка работоспособности
 func (r FileRepository) Ping() error {
 	return nil
 }
 
-// Сохранить пачку сокращенных ссылок
+// BulkSave - Сохранить пачку сокращенных ссылок
 func (r FileRepository) BulkSave(shorts []domain.Short) error {
 
 	file, err := os.OpenFile(r.FilePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
@@ -90,7 +90,7 @@ func (r FileRepository) BulkSave(shorts []domain.Short) error {
 
 }
 
-// Получить сокращенную ссылку по несокращенному значению
+// GetShortURL - Получить сокращенную ссылку по несокращенному значению
 func (r FileRepository) GetShortURL(originalURL string) (string, error) {
 	key, ok := originalURLKeyMap(r.Cache, originalURL)
 	if !ok {
@@ -100,7 +100,7 @@ func (r FileRepository) GetShortURL(originalURL string) (string, error) {
 	return key, nil
 }
 
-// Получить список сокращенных ссылок по идентификатору пользователя
+// FindByUserID - Получить список сокращенных ссылок по идентификатору пользователя
 func (r FileRepository) FindByUserID(userID string) ([]domain.Short, error) {
 	shorts := []domain.Short{}
 	for _, short := range r.Cache {
@@ -111,7 +111,7 @@ func (r FileRepository) FindByUserID(userID string) ([]domain.Short, error) {
 	return shorts, nil
 }
 
-// Удалить пачку сокращенных ссылок
+// BulkDelete - Удалить пачку сокращенных ссылок
 func (r FileRepository) BulkDelete(shortURLs []string, userID string) error {
 	for key, short := range r.Cache {
 		if contains(shortURLs, short.ShortURL) && short.UserID == userID {

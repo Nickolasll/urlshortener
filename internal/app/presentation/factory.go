@@ -33,7 +33,7 @@ func initRepository() domain.IShortRepository {
 	}
 }
 
-// Фабрика приложения с использованием роутера mux
+// MuxFactory - Фабрика приложения с использованием роутера mux
 func MuxFactory() *http.ServeMux {
 	repository = initRepository()
 	mux := http.NewServeMux()
@@ -41,7 +41,7 @@ func MuxFactory() *http.ServeMux {
 	return mux
 }
 
-// Фабрика приложения с использованием роутера chi
+// ChiFactory - Фабрика приложения с использованием роутера chi
 func ChiFactory() *chi.Mux {
 	repository = initRepository()
 	router := chi.NewRouter()

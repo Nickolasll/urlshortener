@@ -12,6 +12,7 @@ import (
 	"honnef.co/go/tools/staticcheck"
 )
 
+// OsExitCheckAnalyzer - Анализатор поиска os.Exit
 var OsExitCheckAnalyzer = &analysis.Analyzer{
 	Name: "os.Exit checker",
 	Doc:  "check for os.Exit",

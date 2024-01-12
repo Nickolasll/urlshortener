@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
 	_ "net/http/pprof"
@@ -10,6 +11,12 @@ import (
 	"github.com/Nickolasll/urlshortener/internal/app/infrastructure/repositories"
 	"github.com/Nickolasll/urlshortener/internal/app/presentation"
 	"github.com/google/uuid"
+)
+
+var (
+	buildVersion string = "N/A"
+	buildDate    string = "N/A"
+	buildCommit  string = "N/A"
 )
 
 func benchmark() {
@@ -28,6 +35,9 @@ func benchmark() {
 }
 
 func main() {
+	fmt.Printf("Build version: %s\n", buildVersion)
+	fmt.Printf("Build date: %s\n", buildDate)
+	fmt.Printf("Build commit: %s\n", buildCommit)
 	config.ParseFlags()
 	go benchmark()
 	mux := presentation.ChiFactory()

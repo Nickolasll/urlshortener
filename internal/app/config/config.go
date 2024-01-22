@@ -21,6 +21,8 @@ var (
 	TokenExp = 3600
 	// SecretKey - Ключ шифрования токена
 	SecretKey = "supersecretkey"
+	// EnableHTTPS - Включение HTTPS в веб-сервере
+	EnableHTTPS = flag.Bool("s", false, "Enable HTTPS")
 )
 
 // ParseFlags - Инициализирует конфигурацию сервиса, читая флаги и переменные окрудения
@@ -41,5 +43,9 @@ func ParseFlags() {
 
 	if envDatabaseDSN, ok := os.LookupEnv("DATABASE_DSN"); ok {
 		*DatabaseDSN = envDatabaseDSN
+	}
+
+	if envEnableHTTPS := os.Getenv("ENABLE_HTTPS"); envEnableHTTPS != "" {
+		*EnableHTTPS = true
 	}
 }

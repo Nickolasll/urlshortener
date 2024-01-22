@@ -35,13 +35,18 @@ func benchmark() {
 }
 
 func main() {
+	var err error
 	fmt.Printf("Build version: %s\n", buildVersion)
 	fmt.Printf("Build date: %s\n", buildDate)
 	fmt.Printf("Build commit: %s\n", buildCommit)
 	config.ParseFlags()
 	go benchmark()
 	mux := presentation.ChiFactory()
-	err := http.ListenAndServe(*config.ServerEndpoint, mux)
+	if *config.EnableHTTPS {
+		err = http.ListenAndServeTLS(*config.ServerEndpoint, "server.crt", "server.key", mux)
+	} else {
+		err = http.ListenAndServe(*config.ServerEndpoint, mux)
+	}
 	if err != nil {
 		panic(err)
 	}

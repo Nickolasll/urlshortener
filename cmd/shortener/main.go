@@ -39,7 +39,10 @@ func main() {
 	fmt.Printf("Build version: %s\n", buildVersion)
 	fmt.Printf("Build date: %s\n", buildDate)
 	fmt.Printf("Build commit: %s\n", buildCommit)
-	config.ParseFlags()
+	err = config.ParseFlags()
+	if err != nil {
+		panic(err)
+	}
 	go benchmark()
 	mux := presentation.ChiFactory()
 	if *config.EnableHTTPS {

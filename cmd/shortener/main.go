@@ -1,8 +1,13 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 
 	_ "net/http/pprof"
 
@@ -35,14 +40,43 @@ func benchmark() {
 }
 
 func main() {
+	var err error
 	fmt.Printf("Build version: %s\n", buildVersion)
 	fmt.Printf("Build date: %s\n", buildDate)
 	fmt.Printf("Build commit: %s\n", buildCommit)
-	config.ParseFlags()
-	go benchmark()
-	mux := presentation.ChiFactory()
-	err := http.ListenAndServe(*config.ServerEndpoint, mux)
+	err = config.ParseFlags()
 	if err != nil {
 		panic(err)
 	}
+	go benchmark()
+	server := &http.Server{
+		Addr:    *config.ServerEndpoint,
+		Handler: presentation.ChiFactory(),
+	}
+
+	idleConnsClosed := make(chan struct{})
+
+	sigint := make(chan os.Signal, 1)
+	signal.Notify(sigint, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
+
+	go func() {
+		<-sigint
+
+		if err := server.Shutdown(context.Background()); err != nil {
+			log.Printf("Server shutdown: %v", err)
+		}
+
+		close(idleConnsClosed)
+	}()
+
+	if *config.EnableHTTPS {
+		err = server.ListenAndServeTLS("server.crt", "server.key")
+	} else {
+		err = server.ListenAndServe()
+	}
+	if err != nil && err != http.ErrServerClosed {
+		panic(err)
+	}
+	<-idleConnsClosed
+	log.Println("Server shutdown gracefully")
 }

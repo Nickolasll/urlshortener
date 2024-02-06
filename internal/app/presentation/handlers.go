@@ -152,3 +152,19 @@ func delete(res http.ResponseWriter, req *http.Request) {
 	res.WriteHeader(http.StatusAccepted)
 	go repository.BulkDelete(shortURLs, userID)
 }
+
+func getInternalStats(res http.ResponseWriter, req *http.Request) {
+	users, urls, err := repository.GetStats()
+	if err != nil {
+		res.WriteHeader(http.StatusInternalServerError)
+		log.Info(err)
+		return
+	}
+	results := GetInternalStatsResult{
+		URLs:  urls,
+		Users: users,
+	}
+	resp, _ := json.Marshal(results)
+	res.WriteHeader(http.StatusOK)
+	res.Write(resp)
+}

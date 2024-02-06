@@ -16,4 +16,6 @@ type IShortRepository interface {
 	FindByUserID(userID string) ([]Short, error)
 	// BulkDelete - Удаление пачки сокращенных ссылок
 	BulkDelete(shortURLs []string, userID string) error
+	// GetStats получение количества пользователей и сокращенных URL
+	GetStats() (int, int, error)
 }

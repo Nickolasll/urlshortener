@@ -146,3 +146,14 @@ func originalURLKeyMap(m map[string]domain.Short, value string) (key string, ok 
 	}
 	return
 }
+
+// GetStats получение количества пользователей и сокращенных URL
+func (r FileRepository) GetStats() (int, int, error) {
+	var uniqueUserIds []string
+	for _, short := range r.Cache {
+		if !contains(uniqueUserIds, short.UserID) {
+			uniqueUserIds = append(uniqueUserIds, short.UserID)
+		}
+	}
+	return len(uniqueUserIds), len(r.Cache), nil
+}

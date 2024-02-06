@@ -75,3 +75,14 @@ func (r RAMRepository) BulkDelete(shortURLs []string, userID string) error {
 	}
 	return nil
 }
+
+// GetStats получение количества пользователей и сокращенных URL
+func (r RAMRepository) GetStats() (int, int, error) {
+	var uniqueUserIds []string
+	for _, short := range r.OriginalToShorts {
+		if !contains(uniqueUserIds, short.UserID) {
+			uniqueUserIds = append(uniqueUserIds, short.UserID)
+		}
+	}
+	return len(uniqueUserIds), len(r.OriginalToShorts), nil
+}

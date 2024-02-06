@@ -279,3 +279,47 @@ func (r PostgresqlRepository) BulkDelete(shortURLs []string, userID string) erro
 	_, err = db.ExecContext(ctx, query)
 	return err
 }
+
+// GetStats получение количества пользователей и сокращенных URL
+func (r PostgresqlRepository) GetStats() (int, int, error) {
+	var uniqueUserIds []string
+	shortCount := 0
+	db, ctx, cancel, err := r.openConn()
+	if err != nil {
+		return len(uniqueUserIds), shortCount, err
+	}
+	defer db.Close()
+	defer cancel()
+	query := `
+		SELECT
+			shortener.id
+			, shortener.short_url
+			, shortener.original_url
+			, shortener.user_id
+			, shortener.deleted
+		FROM
+			shortener
+		;`
+	rows, err := db.QueryContext(ctx, query)
+	if err != nil {
+		return len(uniqueUserIds), shortCount, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var short domain.Short
+		err = rows.Scan(
+			&short.UUID,
+			&short.ShortURL,
+			&short.OriginalURL,
+			&short.UserID,
+			&short.Deleted,
+		)
+		if err == nil && rows.Err() == nil {
+			shortCount += 1
+			if !contains(uniqueUserIds, short.UserID) {
+				uniqueUserIds = append(uniqueUserIds, short.UserID)
+			}
+		}
+	}
+	return len(uniqueUserIds), shortCount, nil
+}

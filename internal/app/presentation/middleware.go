@@ -130,3 +130,14 @@ func authorize(handlerFn http.HandlerFunc) http.HandlerFunc {
 		handlerFn.ServeHTTP(writer, reader.WithContext(ctx))
 	}
 }
+
+func trusted(handlerFn http.HandlerFunc) http.HandlerFunc {
+	return func(writer http.ResponseWriter, reader *http.Request) {
+		realIP := reader.Header.Get("X-Real-IP")
+		if realIP == "" || realIP != *config.TrustedSubnet {
+			writer.WriteHeader(http.StatusForbidden)
+			return
+		}
+		handlerFn.ServeHTTP(writer, reader)
+	}
+}

@@ -56,6 +56,7 @@ func ChiFactory() *chi.Mux {
 
 	router.Get("/{slug}", expandHandler)
 	router.Get("/ping", pingHandler)
+	router.Get("/api/internal/stats", trusted(getInternalStats))
 	router.Get("/api/user/urls", authorize(findURLs))
 	router.Delete("/api/user/urls", authorize(delete))
 	router.Mount("/", cookieSubRouter)

@@ -41,7 +41,7 @@ func postHandler(res http.ResponseWriter, req *http.Request) {
 	userID := getUserID(req.Context())
 	short, err := shorten(string(body), userID)
 	if err != nil {
-		slug, _ := repository.GetShortURL(short.OriginalURL)
+		slug, _ := getShortURLByOriginalURL(short.OriginalURL)
 		res.WriteHeader(http.StatusConflict)
 		res.Write([]byte(*config.SlugEndpoint + slug))
 		return
@@ -67,7 +67,7 @@ func shortenHandler(res http.ResponseWriter, req *http.Request) {
 	userID := getUserID(req.Context())
 	short, err := shorten(string(body), userID)
 	if err != nil {
-		slug, _ := repository.GetShortURL(short.OriginalURL)
+		slug, _ := getShortURLByOriginalURL(short.OriginalURL)
 		resp, _ := json.Marshal(Output{Result: *config.SlugEndpoint + slug})
 		res.WriteHeader(http.StatusConflict)
 		res.Write(resp)
@@ -79,7 +79,7 @@ func shortenHandler(res http.ResponseWriter, req *http.Request) {
 }
 
 func pingHandler(res http.ResponseWriter, req *http.Request) {
-	if repository.Ping() != nil {
+	if ping() != nil {
 		res.WriteHeader(http.StatusInternalServerError)
 	}
 }

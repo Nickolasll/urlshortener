@@ -19,6 +19,10 @@ func shorten(url string, userID string) (domain.Short, error) {
 	return short, err
 }
 
+func getShortURLByOriginalURL(url string) (string, error) {
+	return repository.GetShortURL(url)
+}
+
 func batchShorten(batchInput []BatchInput, userID string) []BatchOutput {
 	var shorts []domain.Short
 	batchOutput := []BatchOutput{}
@@ -63,4 +67,8 @@ func getInternalStats() (GetInternalStatsResult, error) {
 		Users: users,
 	}
 	return results, err
+}
+
+func ping() error {
+	return repository.Ping()
 }

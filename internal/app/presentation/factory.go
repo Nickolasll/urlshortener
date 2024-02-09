@@ -4,9 +4,12 @@ import (
 	"net/http"
 	"time"
 
+	"google.golang.org/grpc"
+
 	"github.com/Nickolasll/urlshortener/internal/app/config"
 	"github.com/Nickolasll/urlshortener/internal/app/domain"
 	"github.com/Nickolasll/urlshortener/internal/app/infrastructure/repositories"
+	pb "github.com/Nickolasll/urlshortener/internal/app/presentation/proto"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/sirupsen/logrus"
@@ -63,4 +66,10 @@ func ChiFactory() *chi.Mux {
 	router.Mount("/debug", middleware.Profiler())
 
 	return router
+}
+
+func gRPCFactory() *grpc.Server {
+	s := grpc.NewServer()
+	pb.RegisterShortenServer(s, &ShortenServer{})
+	return s
 }

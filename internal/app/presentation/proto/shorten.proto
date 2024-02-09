@@ -1,0 +1,88 @@
+syntax = "proto3";
+
+package presentation;
+
+option go_package = "presentation/proto";
+
+message ShortenURLRequest {
+  string user_id = 1;  // Идентификатор пользователя
+  string url = 2;  // URL для сокращения
+}
+
+message ShortenURLResponse {
+  string error = 1;  // Ошибка
+  string result = 2;  // Результат сокращения ссылки
+}
+
+message ExpandRequest {
+  string slug = 1;  // Слаг сокращенной ссылки
+}
+
+message ExpandResponse {
+	string error = 1;  // Ошибка
+	string location = 2; // Результат 
+}
+
+message PingRequest {}
+
+message PingResponse {
+  string status = 1;  // Состояние
+}
+
+message BatchShortenRequestItem {
+  string correlation_id = 1;  // Идентификатор для сравнения
+  string original_url = 2;  // URL для сокращения
+}
+
+message BatchShortenRequest{
+	string user_id = 1;
+	repeated BatchShortenRequestItem input = 2;
+}
+
+message BatchShortenResponseItem {
+  string correlation_id = 1;  // Идентификатор для сравнения
+  string short_url = 2;  // URL для сокращения
+}
+
+message BatchShortenResponse{
+	repeated BatchShortenResponseItem result = 1;
+}
+
+message FindURLsRequest {
+  string user_id = 1;  // Идентификатор пользователя
+}
+
+message FindURLsResponseItem {
+  string short_url = 1;  // Слаг сокращенного URL
+  string original_url = 2;  // URL до сокращения
+}
+
+message FindURLsResponse {
+  repeated FindURLsResponseItem result = 1;
+}
+
+message DeleteRequest {
+  string user_id = 1;  // Идентификатор пользователя
+  repeated string short_urls = 2;  // Список слагов на удаление
+}
+
+message DeleteResponse {
+  string status = 1;
+}
+
+message GetInternalStatsRequest {}
+
+message GetInternalStatsResponse {
+  int32 urls = 1;  // Количество сокращенных ссылок
+  int32 users = 2;  // Количество пользователей
+}
+
+service Shorten {
+	rpc ShortenURL(ShortenURLRequest) returns (ShortenURLResponse);
+	rpc Expand(ExpandRequest) returns (ExpandResponse);
+	rpc Ping(PingRequest) returns (PingResponse);
+	rpc BatchShorten(BatchShortenRequest) returns (BatchShortenResponse);
+	rpc FindURLs(FindURLsRequest) returns (FindURLsResponse);
+	rpc Delete(DeleteRequest) returns (DeleteResponse);
+	rpc getInternalStats(GetInternalStatsRequest) returns (GetInternalStatsResponse);
+}

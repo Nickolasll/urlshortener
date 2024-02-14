@@ -26,6 +26,8 @@ var (
 	EnableHTTPS = flag.Bool("s", false, "Enable HTTPS")
 	// ConfigPath - Путь к JSON файлу с конфигурацией приложения
 	ConfigPath = flag.String("c", "", "Путь к JSON файлу с конфигурацией приложения")
+	// TrustedSubnet - IP адрес доверенной подсети
+	TrustedSubnet = flag.String("t", "", "IP адрес доверенной подсети")
 )
 
 // ParseFlags - Инициализирует конфигурацию сервиса, читая флаги и переменные окрудения
@@ -56,6 +58,10 @@ func ParseFlags() error {
 		*ConfigPath = envConfigPath
 	}
 
+	if envTrustedSubnet, ok := os.LookupEnv("TRUSTED_SUBNET"); ok {
+		*TrustedSubnet = envTrustedSubnet
+	}
+
 	if *ConfigPath != "" {
 		err := loadConfigFromFile(*ConfigPath)
 		if err != nil {
@@ -78,6 +84,8 @@ type FileConfig struct {
 	DatabaseDSN string `json:"database_dsn"`
 	// EnableHTTPS - Включение HTTPS в веб-сервере
 	EnableHTTPS bool `json:"enable_https"`
+	// TrustedSubnet - IP адрес доверенной подсети
+	TrustedSubnet string `json:"trusted_subnet"`
 }
 
 func loadConfigFromFile(path string) error {
@@ -104,6 +112,9 @@ func loadConfigFromFile(path string) error {
 	}
 	if !*EnableHTTPS {
 		*EnableHTTPS = cfg.EnableHTTPS
+	}
+	if *TrustedSubnet == "" {
+		*TrustedSubnet = cfg.TrustedSubnet
 	}
 	return nil
 }

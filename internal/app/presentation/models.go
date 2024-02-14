@@ -27,3 +27,9 @@ type FindURLsResult struct {
 	ShortURL    string `json:"short_url"`
 	OriginalURL string `json:"original_url"`
 }
+
+// GetInternalStatsResult - Модель для сериализации количества пользователей и сокращенных URL
+type GetInternalStatsResult struct {
+	URLs  int `json:"urls"`
+	Users int `json:"users"`
+}
